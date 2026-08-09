@@ -7,6 +7,7 @@ import {
   changePassword,
 } from '../crypto/vault';
 import { createEmptyVault } from '../data/schema';
+import { readBackupFile } from '../data/backup';
 import './LockScreen.css';
 
 const LOCKOUT_KEY = 'mu_lockout_state';
@@ -58,6 +59,31 @@ export default function LockScreen({ existingContainer, onPersistContainer, onUn
   const [pendingRecovery, setPendingRecovery] = useState(null);
   const [recoveryConfirmedSaved, setRecoveryConfirmedSaved] = useState(false);
   const [recoveredSession, setRecoveredSession] = useState(null);
+  const [restoreError, setRestoreError] = useState('');
+
+  // Восстановление копии доступно до входа: на новом устройстве вселенной
+  // ещё нет, и файл — единственный способ её сюда принести.
+  const handleRestoreFile = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      setRestoreError('');
+      try {
+        const restored = await readBackupFile(file);
+        await onPersistContainer(restored);
+        setView('unlock-password');
+        setPassword('');
+      } catch (err) {
+        const key =
+          err.message === 'NOT_A_BACKUP' || err.message === 'INVALID_FILE'
+            ? 'lock.restoreErrorInvalid'
+            : 'lock.restoreErrorRead';
+        setRestoreError(t(key));
+      }
+    },
+    [onPersistContainer, t]
+  );
 
   const isLockedOut = lockoutUntil > Date.now();
   const lockoutSeconds = Math.max(0, Math.ceil((lockoutUntil - Date.now()) / 1000));
@@ -316,6 +342,18 @@ export default function LockScreen({ existingContainer, onPersistContainer, onUn
               {t('lock.setNewPasswordButton')}
             </button>
           </form>
+        )}
+
+        {/* Восстановление из файла имеет смысл только до входа — потом
+            вселенная уже открыта, и подменять её файлом незачем. */}
+        {(view === 'create-password' || view === 'unlock-password') && (
+          <div className="mu-restore-block">
+            <label className="mu-restore-label">
+              {t('lock.restoreFromBackup')}
+              <input type="file" accept="application/json,.json" onChange={handleRestoreFile} />
+            </label>
+            {restoreError && <p className="mu-lock-error">{restoreError}</p>}
+          </div>
         )}
       </div>
     </div>

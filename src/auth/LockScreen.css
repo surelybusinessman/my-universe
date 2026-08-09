@@ -187,3 +187,39 @@
 .mu-recovery-confirm-row input {
   width: auto;
 }
+
+.mu-restore-block {
+  border-top: 1px solid var(--mu-border);
+  margin-top: 1.5rem;
+  padding-top: 1.1rem;
+}
+
+.mu-restore-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--mu-text-dim);
+}
+
+.mu-restore-label input[type='file'] {
+  font-size: 0.75rem;
+  color: var(--mu-text-dim);
+}
+
+.mu-restore-label input[type='file']::file-selector-button {
+  background: transparent;
+  border: 1px solid var(--mu-border);
+  border-radius: 6px;
+  color: var(--mu-text-dim);
+  padding: 0.3rem 0.7rem;
+  margin-right: 0.6rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.mu-restore-label input[type='file']::file-selector-button:hover {
+  border-color: var(--mu-accent);
+  color: var(--mu-accent);
+}

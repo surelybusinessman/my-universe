@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import LockScreen from './auth/LockScreen';
 import { loadContainer, saveContainer } from './data/store';
+import { downloadBackup } from './data/backup';
 import { encryptData } from './crypto/vault';
 import './App.css';
 
@@ -40,6 +41,12 @@ function AppShell() {
     setSession(null);
     setPhase('lock');
   }, []);
+
+  // Скачиваем именно зашифрованный контейнер, а не расшифрованные данные:
+  // файл можно спокойно хранить в облаке или на флешке.
+  const handleExportBackup = useCallback(() => {
+    if (container) downloadBackup(container);
+  }, [container]);
 
   // Каждое сохранение из редактора шифрует свежий снимок данных тем же masterKey
   // и сразу пишет его в IndexedDB — отдельного шага "публикации" нет.
@@ -91,6 +98,7 @@ function AppShell() {
         lang={lang}
         onLockNow={lockNow}
         onUpdateData={handleUpdateData}
+        onExportBackup={handleExportBackup}
       />
     </Suspense>
   );

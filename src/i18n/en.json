@@ -24,6 +24,9 @@
   "lock.recoveryScreenWarning": "This is the only way back in if you forget your password. We don't store it anywhere and can't recover it for you. Write it down or save it somewhere safe — not in this browser.",
   "lock.recoveryScreenConfirm": "I've saved the code somewhere safe",
   "lock.recoveryScreenContinue": "Continue",
+  "lock.restoreFromBackup": "Moving from another device — pick your backup file",
+  "lock.restoreErrorInvalid": "This isn't a My Universe backup file",
+  "lock.restoreErrorRead": "Could not read the file",
   "lang.switch": "RU",
 
   "hud.breadcrumbUniverse": "Universe",
@@ -36,6 +39,7 @@
   "hud.emptyUniverseHint": "Add your first galaxy and star in the editor — they'll appear here.",
   "hud.statsBtn": "Summary",
   "hud.importBtn": "Import",
+  "hud.backupBtn": "Backup",
 
   "import.title": "Import from another AI",
   "import.intro": "Copy the prompt from import/EXTRACT_PROMPT.md (or CLAUDE_EXTRACT_PROMPT.md for Claude) into a chat with an AI that has history with you, then paste its reply here — it should be JSON.",

@@ -47,6 +47,7 @@ export default function SceneHUD({
   onAddEdge,
   onDeleteEdge,
   onImportData,
+  onExportBackup,
 }) {
   const { t, lang: uiLang, setLang } = useI18n();
   const [query, setQuery] = useState('');
@@ -110,6 +111,9 @@ export default function SceneHUD({
         </div>
 
         <div className="mu-hud-actions">
+          <button type="button" className="mu-hud-btn" onClick={onExportBackup}>
+            {t('hud.backupBtn')}
+          </button>
           <button type="button" className="mu-hud-btn" onClick={() => setImportOpen(true)}>
             {t('hud.importBtn')}
           </button>

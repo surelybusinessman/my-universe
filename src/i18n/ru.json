@@ -24,6 +24,9 @@
   "lock.recoveryScreenWarning": "Это единственный способ вернуть доступ, если вы забудете пароль. Мы его нигде не храним и не сможем восстановить сами. Запишите или сохраните в надёжном месте — не в этом же браузере.",
   "lock.recoveryScreenConfirm": "Я сохранил(а) код в надёжном месте",
   "lock.recoveryScreenContinue": "Продолжить",
+  "lock.restoreFromBackup": "Перенос с другого устройства — выберите файл копии",
+  "lock.restoreErrorInvalid": "Это не файл резервной копии «Моей Вселенной»",
+  "lock.restoreErrorRead": "Не удалось прочитать файл",
   "lang.switch": "EN",
 
   "hud.breadcrumbUniverse": "Вселенная",
@@ -36,6 +39,7 @@
   "hud.emptyUniverseHint": "Добавьте первую галактику и звезду в редакторе — они появятся здесь.",
   "hud.statsBtn": "Итоги",
   "hud.importBtn": "Импорт",
+  "hud.backupBtn": "Копия",
 
   "import.title": "Импорт из другого AI",
   "import.intro": "Скопируйте промпт из файла import/EXTRACT_PROMPT.md (или CLAUDE_EXTRACT_PROMPT.md для Claude) в чат с AI, где накопилась история общения, и вставьте сюда его ответ — это должен быть JSON.",
