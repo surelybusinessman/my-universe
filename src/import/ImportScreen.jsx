@@ -37,11 +37,21 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
   }, []);
 
   const commitCount = useMemo(() => rows.filter((r) => r.decision !== 'skip').length, [rows]);
+  const filteredCount = useMemo(
+    () => rows.filter((r) => r.duplicateOf || r.noiseReason).length,
+    [rows]
+  );
+
+  const setAll = useCallback((decision) => {
+    setRows((rs) =>
+      rs.map((r) => (decision === 'add' && r.duplicateOf ? { ...r, decision: 'merge' } : { ...r, decision }))
+    );
+  }, []);
 
   const handleCommit = useCallback(() => {
     const result = applyImport(data, parsed, rows, source);
     onImport(result.data);
-    setSummary({ added: result.added, merged: result.merged });
+    setSummary({ added: result.added, merged: result.merged, skipped: result.skipped });
     setStep('done');
   }, [data, parsed, rows, source, onImport]);
 
@@ -88,7 +98,19 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
         {step === 'review' && (
           <>
             <h1>{t('import.reviewTitle')}</h1>
-            <p className="mu-import-intro">{t('import.reviewCount', { count: rows.length })}</p>
+            <p className="mu-import-intro">
+              {t('import.reviewCount', { count: rows.length })}
+              {filteredCount > 0 && ` · ${t('import.autoFiltered', { count: filteredCount })}`}
+            </p>
+
+            <div className="mu-import-bulk">
+              <button type="button" className="mu-import-decision-btn" onClick={() => setAll('add')}>
+                {t('import.selectAll')}
+              </button>
+              <button type="button" className="mu-import-decision-btn" onClick={() => setAll('skip')}>
+                {t('import.deselectAll')}
+              </button>
+            </div>
 
             <div className="mu-import-rows">
               {rows.map((row) => (
@@ -106,6 +128,9 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
                     <p className="mu-import-duplicate-note">
                       {t('import.duplicateNote', { title: pickLang(row.duplicateOf.title, lang) })}
                     </p>
+                  )}
+                  {!row.duplicateOf && row.noiseReason && (
+                    <p className="mu-import-noise-note">{t(`import.noise.${row.noiseReason}`)}</p>
                   )}
                   <div className="mu-import-decision-row">
                     <button
@@ -151,7 +176,11 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
           <>
             <h1>{t('import.doneTitle')}</h1>
             <p className="mu-import-intro">
-              {t('import.doneSummary', { added: summary.added, merged: summary.merged })}
+              {t('import.doneSummary', {
+                added: summary.added,
+                merged: summary.merged,
+                skipped: summary.skipped,
+              })}
             </p>
             <button type="button" className="mu-btn-primary mu-import-parse-btn" onClick={onClose}>
               {t('import.closeButton')}

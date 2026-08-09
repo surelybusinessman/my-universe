@@ -1,10 +1,18 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { CameraControls, Stars, Sparkles } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { CameraControls, Stars, Sparkles, Preload } from '@react-three/drei';
+import {
+  EffectComposer,
+  Bloom,
+  ChromaticAberration,
+  Vignette,
+  Noise,
+} from '@react-three/postprocessing';
+import { BlendFunction } from 'postprocessing';
+import * as THREE from 'three';
 import GalaxyField from './GalaxyField';
 import EdgesLayer from './EdgesLayer';
-import { layoutGalaxies, layoutAllNodes } from './layout';
+import { layoutGalaxies, layoutAllNodes, galaxyRadius } from './layout';
 import SceneHUD from '../ui/SceneHUD';
 import { makeId } from '../data/schema';
 import {
@@ -19,7 +27,6 @@ import {
 } from '../data/mutations';
 import './UniverseScene.css';
 
-const UNIVERSE_VIEW = { px: 0, py: 45, pz: 150, tx: 0, ty: 0, tz: 0 };
 
 export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
   const controlsRef = useRef();
@@ -37,18 +44,23 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
   );
   const currentGalaxy = focus.galaxyId ? data.galaxies.find((g) => g.id === focus.galaxyId) : null;
 
+  const universeDistance = useMemo(
+    () => Math.max(70, data.galaxies.length * 24) * 1.25 + 60,
+    [data.galaxies.length]
+  );
+
   const flyToUniverse = useCallback(() => {
     controlsRef.current?.setLookAt(
-      UNIVERSE_VIEW.px,
-      UNIVERSE_VIEW.py,
-      UNIVERSE_VIEW.pz,
-      UNIVERSE_VIEW.tx,
-      UNIVERSE_VIEW.ty,
-      UNIVERSE_VIEW.tz,
+      0,
+      universeDistance * 0.32,
+      universeDistance,
+      0,
+      0,
+      0,
       true
     );
     setFocus({ level: 'universe', galaxyId: null, nodeId: null });
-  }, []);
+  }, [universeDistance]);
 
   const flyToGalaxy = useCallback(
     (galaxyId) => {
@@ -57,10 +69,14 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
         flyToUniverse();
         return;
       }
+      // Отлетаем от галактики на расстояние, пропорциональное её размеру,
+      // и смотрим слегка сверху — так спираль читается лучше всего.
+      const count = (nodesByGalaxy[galaxyId] ?? []).length;
+      const r = galaxyRadius(count);
       controlsRef.current?.setLookAt(
-        pos.x + 20,
-        pos.y + 12,
-        pos.z + 20,
+        pos.x + r * 1.5,
+        pos.y + r * 1.05,
+        pos.z + r * 1.5,
         pos.x,
         pos.y,
         pos.z,
@@ -68,14 +84,14 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
       );
       setFocus({ level: 'galaxy', galaxyId, nodeId: null });
     },
-    [galaxyPositions, flyToUniverse]
+    [galaxyPositions, nodesByGalaxy, flyToUniverse]
   );
 
   const flyToNode = useCallback((node, position) => {
     controlsRef.current?.setLookAt(
-      position.x + 3.5,
-      position.y + 2,
-      position.z + 4.5,
+      position.x + 4.2,
+      position.y + 2.4,
+      position.z + 5.4,
       position.x,
       position.y,
       position.z,
@@ -99,6 +115,31 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [handleBack]);
+
+  // CameraControls при монтировании берёт камеру под свой контроль, поэтому
+  // стартовый кадр выставляем через них же, как только ref заполнен.
+  // CameraControls монтируется внутри Canvas асинхронно, поэтому ref может быть
+  // ещё пустым на первом кадре — ждём его появления и только тогда ставим кадр.
+  useEffect(() => {
+    let raf;
+    const apply = () => {
+      if (controlsRef.current) {
+        controlsRef.current.setLookAt(
+          0,
+          universeDistance * 0.32,
+          universeDistance,
+          0,
+          0,
+          0,
+          false
+        );
+        return;
+      }
+      raf = requestAnimationFrame(apply);
+    };
+    apply();
+    return () => cancelAnimationFrame(raf);
+  }, [universeDistance]);
 
   const handleSearchSelect = useCallback(
     (node) => {
@@ -179,11 +220,29 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
 
   return (
     <div className="mu-universe-wrap">
-      <Canvas camera={{ position: [UNIVERSE_VIEW.px, UNIVERSE_VIEW.py, UNIVERSE_VIEW.pz], fov: 50, near: 0.1, far: 3000 }}>
-        <color attach="background" args={['#03040a']} />
-        <ambientLight intensity={0.5} />
-        <Stars radius={320} depth={90} count={4500} factor={4} saturation={0} fade speed={0.35} />
-        <Sparkles count={200} scale={220} size={2.2} speed={0.15} color="#6fd3ff" opacity={0.12} />
+      <Canvas
+        // dpr до 3x — на 4K-экране картинка рендерится в родном разрешении без мыла.
+        dpr={[1, 3]}
+        gl={{
+          antialias: true,
+          powerPreference: 'high-performance',
+          alpha: false,
+          stencil: false,
+        }}
+        onCreated={({ gl }) => {
+          // ACES даёт кинематографичную передачу ярких участков: свечение звёзд
+          // не выгорает в плоское белое пятно, а сохраняет цвет.
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.15;
+          gl.outputColorSpace = THREE.SRGBColorSpace;
+        }}
+        camera={{ position: [0, 140, 430], fov: 55, near: 0.5, far: 8000 }}
+      >
+        <color attach="background" args={['#02030a']} />
+        <ambientLight intensity={0.6} />
+
+        <Stars radius={1200} depth={420} count={14000} factor={7} saturation={0} fade speed={0.3} />
+        <Sparkles count={420} scale={700} size={3.4} speed={0.12} color="#9fd8ff" opacity={0.16} />
 
         <GalaxyField
           data={data}
@@ -196,10 +255,23 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
         />
         <EdgesLayer edges={data.edges} nodePositionsById={nodePositionsById} />
 
-        <CameraControls ref={controlsRef} minDistance={2.5} maxDistance={280} smoothTime={0.55} />
+        <CameraControls
+          ref={controlsRef}
+          minDistance={2.5}
+          maxDistance={1600}
+          smoothTime={0.6}
+          draggingSmoothTime={0.18}
+        />
 
-        <EffectComposer multisampling={4}>
-          <Bloom intensity={0.85} luminanceThreshold={0.15} luminanceSmoothing={0.4} mipmapBlur />
+        <EffectComposer multisampling={4} enableNormalPass={false}>
+          <Bloom
+            intensity={0.95}
+            luminanceThreshold={0.22}
+            luminanceSmoothing={0.7}
+            mipmapBlur
+            radius={0.78}
+          />
+          <Vignette offset={0.22} darkness={0.72} blendFunction={BlendFunction.NORMAL} />
         </EffectComposer>
       </Canvas>
 
