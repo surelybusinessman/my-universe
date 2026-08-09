@@ -5,18 +5,18 @@ import { getGlowTexture, getStarburstTexture } from './textures';
 
 // Визуальный язык статусов: яркость и «живость» звезды сразу говорят,
 // на каком этапе дело, ещё до открытия панели.
+// corona: тусклым звёздам плотная корона не нужна — она всё равно не видна,
+// а каждый спрайт это отдельный вызов отрисовки на все 45 звёзд сцены.
 const STATUS_STYLE = {
-  done: { core: 1.0, glow: 1.0, burst: 1.0, twinkle: 1.0, gray: false },
-  in_progress: { core: 0.92, glow: 0.72, burst: 0.42, twinkle: 0.55, gray: false },
-  planned: { core: 0.22, glow: 0.3, burst: 0.0, twinkle: 0.18, gray: false },
-  abandoned: { core: 0.14, glow: 0.16, burst: 0.0, twinkle: 0.0, gray: true },
+  done: { core: 1.0, glow: 1.0, corona: true, burst: 1.0, twinkle: 1.0, gray: false },
+  in_progress: { core: 0.92, glow: 0.72, corona: true, burst: 0.42, twinkle: 0.55, gray: false },
+  planned: { core: 0.22, glow: 0.3, corona: false, burst: 0.0, twinkle: 0.18, gray: false },
+  abandoned: { core: 0.14, glow: 0.16, corona: false, burst: 0.0, twinkle: 0.0, gray: true },
 };
 
 export default function StarNode({ node, position, color, isFocused, onClick }) {
-  const groupRef = useRef();
   const coreRef = useRef();
   const glowRef = useRef();
-  const burstRef = useRef();
   const coronaRef = useRef();
 
   const glowTexture = useMemo(() => getGlowTexture(), []);
@@ -42,20 +42,18 @@ export default function StarNode({ node, position, color, isFocused, onClick }) 
   // Каждая звезда мерцает в своём ритме — иначе всё поле пульсирует синхронно.
   const phase = useMemo(() => (position.x * 3.1 + position.z * 1.7) % (Math.PI * 2), [position]);
 
-  useFrame(({ clock, camera }) => {
+  useFrame(({ clock }) => {
+    // Совсем погасшие звёзды не мерцают — нет смысла считать для них анимацию.
+    if (style.twinkle === 0) return;
+
     const t = clock.getElapsedTime();
     const twinkle = 1 + Math.sin(t * 1.5 + phase) * 0.14 * style.twinkle;
-    const breathe = 1 + Math.sin(t * 0.8 + phase * 1.3) * 0.07 * style.twinkle;
 
     if (coreRef.current) coreRef.current.scale.setScalar(twinkle);
-    if (glowRef.current) glowRef.current.scale.setScalar(breathe);
-    if (coronaRef.current) coronaRef.current.scale.setScalar(1 + (twinkle - 1) * 0.5);
-
-    // Блик всегда развёрнут к камере и слегка вращается — оживляет картинку.
-    if (burstRef.current) {
-      burstRef.current.quaternion.copy(camera.quaternion);
-      burstRef.current.rotation.z += 0.0006;
+    if (glowRef.current) {
+      glowRef.current.scale.setScalar(1 + Math.sin(t * 0.8 + phase * 1.3) * 0.07 * style.twinkle);
     }
+    if (coronaRef.current) coronaRef.current.scale.setScalar(1 + (twinkle - 1) * 0.5);
   });
 
   const handleClick = (e) => {
@@ -64,7 +62,7 @@ export default function StarNode({ node, position, color, isFocused, onClick }) 
   };
 
   return (
-    <group ref={groupRef} position={[position.x, position.y, position.z]}>
+    <group position={[position.x, position.y, position.z]}>
       {/* Ореол — самый большой мягкий слой, даёт основное свечение */}
       <sprite ref={glowRef} scale={coreSize * 11} onClick={handleClick}>
         <spriteMaterial
@@ -80,21 +78,24 @@ export default function StarNode({ node, position, color, isFocused, onClick }) 
 
       {/* Плотная корона у самого ядра — красится цветом галактики, а не белым,
           иначе слои additive-смешения складываются в бесцветное пятно */}
-      <sprite ref={coronaRef} scale={coreSize * 4}>
-        <spriteMaterial
-          map={glowTexture}
-          color={haloColor}
-          transparent
-          opacity={0.5 * style.glow}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-          toneMapped={false}
-        />
-      </sprite>
+      {style.corona && (
+        <sprite ref={coronaRef} scale={coreSize * 4}>
+          <spriteMaterial
+            map={glowTexture}
+            color={haloColor}
+            transparent
+            opacity={0.5 * style.glow}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </sprite>
+      )}
 
-      {/* Лучи-искра — только у ярких, завершённых звёзд */}
+      {/* Лучи-искра — только у ярких, завершённых звёзд.
+          Sprite сам всегда развёрнут к камере, доворачивать его вручную не нужно. */}
       {style.burst > 0 && (
-        <sprite ref={burstRef} scale={coreSize * 11}>
+        <sprite scale={coreSize * 11}>
           <spriteMaterial
             map={burstTexture}
             color={haloColor}
@@ -107,9 +108,10 @@ export default function StarNode({ node, position, color, isFocused, onClick }) 
         </sprite>
       )}
 
-      {/* Само тело звезды */}
+      {/* Само тело звезды. Крупные звёзды получают больше сегментов, мелкие —
+          меньше: на экране они всё равно занимают считанные пиксели. */}
       <mesh ref={coreRef} onClick={handleClick}>
-        <sphereGeometry args={[coreSize, 32, 32]} />
+        <sphereGeometry args={[coreSize, level >= 4 ? 24 : 16, level >= 4 ? 24 : 16]} />
         <meshBasicMaterial color={coreColor} toneMapped={false} transparent opacity={style.core} />
       </mesh>
 

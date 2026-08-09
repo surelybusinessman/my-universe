@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { getGlowTexture, getNebulaTexture, getDustTexture } from './textures';
 import { mulberry32, seedFromId, galaxyRadius } from './layout';
 
-const DUST_COUNT = 1400;
+const DUST_COUNT = 850;
 const ARMS = 2;
 const SPIRAL_TURNS = 2.3;
 
@@ -85,7 +85,7 @@ function Nebula({ color, radius, seed }) {
 
   const layers = useMemo(() => {
     const rng = mulberry32(seed + 7919);
-    return Array.from({ length: 4 }, () => ({
+    return Array.from({ length: 3 }, () => ({
       scale: radius * (1.9 + rng() * 1.5),
       rotation: rng() * Math.PI * 2,
       offset: [(rng() - 0.5) * radius * 0.5, (rng() - 0.5) * radius * 0.2, (rng() - 0.5) * radius * 0.5],

@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { CameraControls, Stars, Sparkles, Preload } from '@react-three/drei';
+import { CameraControls, Stars, Sparkles, Preload, PerformanceMonitor } from '@react-three/drei';
 import {
   EffectComposer,
   Bloom,
@@ -31,6 +31,9 @@ import './UniverseScene.css';
 export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
   const controlsRef = useRef();
   const [focus, setFocus] = useState({ level: 'universe', galaxyId: null, nodeId: null });
+  // Плотность пикселей подстраивается под реальную частоту кадров: на мощной
+  // машине картинка рендерится в 4K, на слабой — мягко опускается вместо рывков.
+  const [dpr, setDpr] = useState(() => Math.min(1.5, window.devicePixelRatio || 1));
 
   const galaxyPositions = useMemo(() => layoutGalaxies(data.galaxies), [data.galaxies]);
   const { byId: nodePositionsById, byGalaxy: nodesByGalaxy } = useMemo(
@@ -221,8 +224,7 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
   return (
     <div className="mu-universe-wrap">
       <Canvas
-        // dpr до 3x — на 4K-экране картинка рендерится в родном разрешении без мыла.
-        dpr={[1, 3]}
+        dpr={dpr}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',
@@ -238,11 +240,22 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
         }}
         camera={{ position: [0, 140, 430], fov: 55, near: 0.5, far: 8000 }}
       >
+        {/* Разрешение подбирается шагами, а не рывком: при стабильно высоком fps
+            картинка становится чётче, при просадке мягко отступает. flipflops
+            не даёт зациклиться на границе, onFallback — аварийный минимум. */}
+        <PerformanceMonitor
+          bounds={() => [55, 95]}
+          flipflops={3}
+          onIncline={() => setDpr((d) => Math.min(2.5, +(d + 0.25).toFixed(2)))}
+          onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
+          onFallback={() => setDpr(1)}
+        />
+
         <color attach="background" args={['#02030a']} />
         <ambientLight intensity={0.6} />
 
-        <Stars radius={1200} depth={420} count={14000} factor={7} saturation={0} fade speed={0.3} />
-        <Sparkles count={420} scale={700} size={3.4} speed={0.12} color="#9fd8ff" opacity={0.16} />
+        <Stars radius={1200} depth={420} count={6000} factor={7} saturation={0} fade speed={0.3} />
+        <Sparkles count={160} scale={700} size={3.6} speed={0.12} color="#9fd8ff" opacity={0.18} />
 
         <GalaxyField
           data={data}
@@ -263,7 +276,9 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
           draggingSmoothTime={0.18}
         />
 
-        <EffectComposer multisampling={4} enableNormalPass={false}>
+        {/* MSAA поверх bloom почти не даёт разницы, но стоит целого прохода
+            по буферу — сглаживание берут на себя свечение и высокий dpr. */}
+        <EffectComposer multisampling={0} enableNormalPass={false}>
           <Bloom
             intensity={0.95}
             luminanceThreshold={0.22}
@@ -271,8 +286,19 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData }) {
             mipmapBlur
             radius={0.78}
           />
+          {/* Лёгкая хроматическая аберрация по краям — «стекло объектива» */}
+          <ChromaticAberration
+            offset={[0.0005, 0.0007]}
+            blendFunction={BlendFunction.NORMAL}
+            radialModulation
+            modulationOffset={0.45}
+          />
           <Vignette offset={0.22} darkness={0.72} blendFunction={BlendFunction.NORMAL} />
+          {/* Едва заметное зерно убирает полосы на тёмных градиентах космоса */}
+          <Noise opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
         </EffectComposer>
+
+        <Preload all />
       </Canvas>
 
       <SceneHUD

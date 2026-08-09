@@ -1,10 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import LockScreen from './auth/LockScreen';
-import UniverseScene from './scene/UniverseScene';
 import { loadContainer, saveContainer } from './data/store';
 import { encryptData } from './crypto/vault';
 import './App.css';
+
+// Three.js со всей 3D-обвязкой весит больше мегабайта и нужен только после входа.
+// Ленивая загрузка убирает его из стартового бандла — экран пароля появляется сразу.
+const UniverseScene = lazy(() => import('./scene/UniverseScene'));
 
 // Бездействие дольше этого — сессия сама блокируется, masterKey и данные уходят из памяти.
 const AUTO_LOCK_MS = 15 * 60 * 1000;
@@ -81,9 +84,15 @@ function AppShell() {
     );
   }
 
-  // Этап 4 добавит сюда аналитику поверх той же сцены.
   return (
-    <UniverseScene data={session.data} lang={lang} onLockNow={lockNow} onUpdateData={handleUpdateData} />
+    <Suspense fallback={<div className="mu-loading">…</div>}>
+      <UniverseScene
+        data={session.data}
+        lang={lang}
+        onLockNow={lockNow}
+        onUpdateData={handleUpdateData}
+      />
+    </Suspense>
   );
 }
 
