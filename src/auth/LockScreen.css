@@ -1,0 +1,189 @@
+.mu-lock-screen {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 20%, #131a3a 0%, #05060f 60%, #020208 100%);
+}
+
+.mu-stars-bg {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(1px 1px at 10% 20%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 80% 10%, #ffffff 100%, transparent),
+    radial-gradient(1.5px 1.5px at 30% 70%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 60% 40%, #ffffff 100%, transparent),
+    radial-gradient(2px 2px at 90% 80%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 45% 90%, #ffffff 100%, transparent),
+    radial-gradient(1px 1px at 15% 55%, #ffffff 100%, transparent),
+    radial-gradient(1.5px 1.5px at 70% 65%, #ffffff 100%, transparent);
+  background-repeat: repeat;
+  background-size: 600px 600px;
+  opacity: 0.55;
+  animation: mu-drift 140s linear infinite;
+}
+
+@keyframes mu-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -600px 300px;
+  }
+}
+
+.mu-lang-toggle {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 2;
+  background: transparent;
+  border: 1px solid var(--mu-border);
+  color: var(--mu-text-dim);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.mu-lang-toggle:hover {
+  color: var(--mu-accent);
+  border-color: var(--mu-accent);
+}
+
+.mu-lock-card {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 90vw);
+  background: var(--mu-panel);
+  border: 1px solid var(--mu-border);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 60px rgba(111, 211, 255, 0.08), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.mu-lock-app-title {
+  text-align: center;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-size: 1.1rem;
+  color: var(--mu-accent);
+  margin: 0 0 1.5rem;
+}
+
+.mu-lock-form h2 {
+  font-weight: 400;
+  font-size: 1.15rem;
+  margin: 0 0 1.25rem;
+  text-align: center;
+  color: var(--mu-text);
+}
+
+.mu-lock-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--mu-text-dim);
+  margin-bottom: 1rem;
+}
+
+.mu-lock-form input {
+  background: rgba(5, 8, 20, 0.6);
+  border: 1px solid var(--mu-border);
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  color: var(--mu-text);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.mu-lock-form input:focus {
+  border-color: var(--mu-accent);
+}
+
+.mu-lock-form button[type='submit'],
+.mu-lock-form button[type='button']:not(.mu-lock-link) {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--mu-accent), var(--mu-accent-2));
+  color: #05060f;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-top: 0.5rem;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.mu-lock-form button[type='submit']:hover:not(:disabled),
+.mu-lock-form button[type='button']:not(.mu-lock-link):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.mu-lock-form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mu-lock-link {
+  display: block;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: var(--mu-text-dim);
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+  text-decoration: underline;
+}
+
+.mu-lock-link:hover {
+  color: var(--mu-accent);
+}
+
+.mu-lock-error {
+  color: #ff8a8a;
+  font-size: 0.82rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.mu-recovery-warning {
+  color: var(--mu-text-dim);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.mu-recovery-code {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  background: rgba(5, 8, 20, 0.6);
+  border: 1px dashed var(--mu-border);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  word-break: break-all;
+  color: var(--mu-accent);
+  margin-bottom: 1.25rem;
+}
+
+.mu-recovery-confirm-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--mu-text-dim);
+  margin-bottom: 1.25rem;
+}
+
+.mu-recovery-confirm-row input {
+  width: auto;
+}

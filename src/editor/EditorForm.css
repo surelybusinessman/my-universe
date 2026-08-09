@@ -1,0 +1,224 @@
+.mu-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.mu-editor-form h2 {
+  font-weight: 400;
+  font-size: 1.2rem;
+  margin: 0 0 0.25rem;
+  color: var(--mu-text);
+  padding-right: 1.5rem;
+}
+
+.mu-editor-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--mu-text-dim);
+}
+
+.mu-editor-form input[type='text'],
+.mu-editor-form textarea,
+.mu-editor-form select {
+  background: rgba(5, 8, 20, 0.6);
+  border: 1px solid var(--mu-border);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  color: var(--mu-text);
+  font-size: 0.88rem;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.mu-editor-form input[type='text']:focus,
+.mu-editor-form textarea:focus,
+.mu-editor-form select:focus {
+  border-color: var(--mu-accent);
+}
+
+.mu-editor-form input[type='range'] {
+  accent-color: var(--mu-accent);
+}
+
+.mu-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.mu-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.mu-color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+}
+
+.mu-color-swatch-active {
+  border-color: var(--mu-text);
+}
+
+.mu-color-custom {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--mu-border);
+  border-radius: 6px;
+  background: none;
+}
+
+.mu-form-section {
+  border-top: 1px solid var(--mu-border);
+  padding-top: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mu-form-section-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--mu-text-dim);
+}
+
+.mu-step-row,
+.mu-conn-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--mu-text);
+}
+
+.mu-step-row span,
+.mu-conn-row span {
+  flex: 1;
+}
+
+.mu-step-done-text {
+  color: var(--mu-text-dim);
+  text-decoration: line-through;
+}
+
+.mu-conn-row em {
+  color: var(--mu-text-dim);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
+.mu-step-remove {
+  background: none;
+  border: none;
+  color: var(--mu-text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.1rem 0.4rem;
+}
+
+.mu-step-remove:hover {
+  color: #ff8a8a;
+}
+
+.mu-step-add-row,
+.mu-conn-add-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.mu-step-add-row input {
+  flex: 1;
+}
+
+.mu-conn-add-row {
+  flex-wrap: wrap;
+}
+
+.mu-conn-add-row select {
+  flex: 1;
+  min-width: 120px;
+}
+
+.mu-form-hint {
+  font-size: 0.8rem;
+  color: var(--mu-text-dim);
+  margin: 0;
+}
+
+.mu-form-error {
+  color: #ff8a8a;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.mu-form-actions {
+  display: flex;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+.mu-btn-primary,
+.mu-btn-ghost,
+.mu-btn-danger,
+.mu-btn-danger-outline {
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+  border: 1px solid transparent;
+}
+
+.mu-btn-primary {
+  background: linear-gradient(135deg, var(--mu-accent), var(--mu-accent-2));
+  color: #05060f;
+  font-weight: 600;
+  flex: 1;
+}
+
+.mu-btn-ghost {
+  background: none;
+  border-color: var(--mu-border);
+  color: var(--mu-text-dim);
+}
+
+.mu-btn-ghost:hover {
+  color: var(--mu-text);
+  border-color: var(--mu-text-dim);
+}
+
+.mu-btn-danger-outline {
+  background: none;
+  border-color: rgba(255, 138, 138, 0.4);
+  color: #ff8a8a;
+}
+
+.mu-btn-danger {
+  background: #ff8a8a;
+  color: #2a0a0a;
+  font-weight: 600;
+}
+
+.mu-form-danger-zone {
+  border-top: 1px solid var(--mu-border);
+  padding-top: 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.mu-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--mu-text-dim);
+  flex-wrap: wrap;
+}

@@ -1,0 +1,27 @@
+.mu-universe-wrap {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mu-universe-wrap canvas {
+  display: block;
+}
+
+.mu-galaxy-label {
+  background: rgba(5, 8, 20, 0.55);
+  border: 1px solid var(--mu-galaxy-color, var(--mu-border));
+  color: var(--mu-galaxy-color, var(--mu-text));
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  transform: translateY(-50%);
+}
+
+.mu-galaxy-label:hover {
+  background: rgba(5, 8, 20, 0.8);
+}

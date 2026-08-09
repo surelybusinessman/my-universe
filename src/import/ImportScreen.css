@@ -1,0 +1,143 @@
+.mu-import-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: radial-gradient(ellipse at 50% 10%, #131a3a 0%, #05060f 55%, #020208 100%);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.mu-import-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.75rem;
+  z-index: 21;
+}
+
+.mu-import-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 4rem 2rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.mu-import-content h1 {
+  font-weight: 300;
+  font-size: 1.4rem;
+  color: var(--mu-text);
+  margin: 0;
+}
+
+.mu-import-intro {
+  color: var(--mu-text-dim);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  margin: 0 0 0.5rem;
+}
+
+.mu-import-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--mu-text-dim);
+}
+
+.mu-import-field select,
+.mu-import-field textarea {
+  background: rgba(5, 8, 20, 0.6);
+  border: 1px solid var(--mu-border);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  color: var(--mu-text);
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+}
+
+.mu-import-field textarea {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.8rem;
+}
+
+.mu-import-field select:focus,
+.mu-import-field textarea:focus {
+  border-color: var(--mu-accent);
+}
+
+.mu-import-parse-btn {
+  align-self: flex-start;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.mu-import-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.mu-import-row {
+  border: 1px solid var(--mu-border);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mu-import-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.mu-import-row-title {
+  font-size: 0.92rem;
+  color: var(--mu-text);
+  font-weight: 500;
+}
+
+.mu-import-confidence {
+  font-size: 0.7rem;
+  color: var(--mu-text-dim);
+  font-style: italic;
+}
+
+.mu-import-duplicate-note {
+  font-size: 0.78rem;
+  color: #ffcf8a;
+  margin: 0;
+}
+
+.mu-import-decision-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.mu-import-decision-btn {
+  background: none;
+  border: 1px solid var(--mu-border);
+  color: var(--mu-text-dim);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.mu-import-decision-btn:hover {
+  border-color: var(--mu-accent);
+  color: var(--mu-accent);
+}
+
+.mu-import-decision-active {
+  background: rgba(111, 211, 255, 0.15);
+  border-color: var(--mu-accent);
+  color: var(--mu-accent);
+}
