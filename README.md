@@ -1,16 +1,50 @@
-# React + Vite
+# Моя Вселенная
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Личная 3D-карта жизни: галактики = сферы жизни, звёзды = достижения, навыки,
+цели, обучение и то, что не получилось. Всё зашифровано на вашем устройстве —
+пароль нигде не хранится.
 
-Currently, two official plugins are available:
+Живая версия: **https://surelybusinessman.github.io/my-universe/**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Безопасность и бэкапы
 
-## React Compiler
+- Пароль защищает вход, а сами данные дополнительно зашифрованы (AES-256-GCM).
+  Даже если кто-то откроет ссылку, без пароля содержимое — нечитаемый набор байт.
+- При первом создании вселенной вы получаете **код восстановления** — это
+  единственный способ вернуть доступ, если забудете пароль. Он нигде не
+  хранится и не восстанавливается нами. Держите его в отдельном надёжном
+  месте (менеджер паролей, бумага, сейф) — не в этом же браузере.
+- Все данные хранятся в IndexedDB вашего браузера, привязаны к конкретному
+  браузеру и устройству. **Периодически делайте резервную копию:**
+  - Откройте DevTools → Application → IndexedDB → `my-universe`, либо
+  - Проще: заведите привычку раз в 1-2 недели заходить и держать пароль/код
+    восстановления под рукой — сам факт входа подтверждает, что данные живы.
+- Если планируете чистить историю браузера, куки или "данные сайтов" —
+  сначала выгрузите бэкап, иначе вселенная будет удалена вместе с этим.
+- Перенос на другое устройство: пока данные привязаны к браузеру, где были
+  созданы. Синхронизация между устройствами — в планах на будущее (см. план
+  проекта, этап "Как сохраняются правки").
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Разработка
 
-## Expanding the Oxlint configuration
+```bash
+npm install
+npm run dev      # локальный запуск
+npm run build    # прод-сборка в dist/
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Деплой
+
+Автоматический: любой push в ветку `main` запускает
+`.github/workflows/deploy.yml`, который собирает проект и публикует его на
+GitHub Pages.
+
+## Импорт памяти из других AI
+
+В папке `import/` — готовые промпты для выгрузки истории о себе:
+
+- `EXTRACT_PROMPT.md` — для ChatGPT, Gemini и любого другого AI
+- `CLAUDE_EXTRACT_PROMPT.md` — для Claude
+
+Скопируйте промпт в чат, вставьте JSON-ответ в экран «Импорт» внутри
+приложения.
