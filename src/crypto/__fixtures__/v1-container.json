@@ -1,0 +1,41 @@
+{
+  "password": "fixture-password-v1",
+  "recoveryCode": "D8X8-KMFA-2E00-2TDT-FDZG-18Q7-R963-GVQX",
+  "expectedData": {
+    "version": 1,
+    "galaxies": [
+      {
+        "id": "g_fixture"
+      }
+    ],
+    "nodes": [
+      {
+        "id": "n_fixture",
+        "title": {
+          "ru": "Тест"
+        }
+      }
+    ],
+    "edges": []
+  },
+  "container": {
+    "version": 1,
+    "kdf": {
+      "iterations": 600000,
+      "salt": "W2xRMe4FtN+KM9c9zcdYlA=="
+    },
+    "passwordWrap": {
+      "iv": "1JrSC1IW95I14KuV",
+      "data": "F6w+x3I5JSIHI3zBOIplfAHWWlrc01O30Lz2Mv2mB4eCgRVzoO4dJZ3ANZkJqFhM"
+    },
+    "recoveryWrap": {
+      "iv": "DKDuXyhvPGzWOhkr",
+      "data": "o+eVN5gwEevapp3rGfvlOySg/5ReG668Xv+mQikmPBidtmAvCK5ln4cYeO6c06fA"
+    },
+    "data": {
+      "iv": "I0WA1hz+e09M8vBA",
+      "data": "JZ6X6lgj9lb0DXeL0OxTSayrJLlTStw3jKR5s9dvZNaLmpZUMyUdBYPXg9QIAT7t04eqFC+VZyzw0/Fn9IxogicNPIUXGXp6VIhApWW+v/RYzZ/fMeGp7oIlivS2phgzKzYSUfs7D/OKUQkRhzOzAWok7W5k0EjtWdd6alJ1GA=="
+    },
+    "updatedAt": "2026-08-10T07:22:37.823Z"
+  }
+}

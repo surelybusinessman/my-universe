@@ -25,6 +25,17 @@ export function downloadBackup(container, date = new Date()) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+/** Проверяет, что распарсенный JSON похож на наш контейнер, а не случайный файл. */
+export function isBackupContainer(parsed) {
+  return Boolean(
+    parsed &&
+      typeof parsed === 'object' &&
+      parsed.kdf?.salt &&
+      parsed.passwordWrap?.data &&
+      parsed.data?.data
+  );
+}
+
 /**
  * Читает файл копии и проверяет, что это действительно наш контейнер,
  * а не случайный JSON — иначе можно затереть рабочее хранилище мусором.
@@ -41,13 +52,7 @@ export function readBackupFile(file) {
         reject(new Error('INVALID_FILE'));
         return;
       }
-      const looksValid =
-        parsed &&
-        typeof parsed === 'object' &&
-        parsed.kdf?.salt &&
-        parsed.passwordWrap?.data &&
-        parsed.data?.data;
-      if (!looksValid) {
+      if (!isBackupContainer(parsed)) {
         reject(new Error('NOT_A_BACKUP'));
         return;
       }
