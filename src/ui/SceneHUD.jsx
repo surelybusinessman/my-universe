@@ -7,6 +7,8 @@ import ConfirmDelete from '../editor/ConfirmDelete';
 import StatsScreen from '../analytics/StatsScreen';
 import { overallProgress, galaxyProgress } from '../analytics/stats';
 import ImportScreen from '../import/ImportScreen';
+import { shouldShowBackupReminder } from '../data/backupReminder';
+import { isAutoBackupSupported } from '../data/autoBackup';
 import './SceneHUD.css';
 
 function matchesQuery(node, lang, query) {
@@ -48,6 +50,9 @@ export default function SceneHUD({
   onDeleteEdge,
   onImportData,
   onExportBackup,
+  lastBackupAt,
+  autoBackupOn,
+  onSetupAutoBackup,
 }) {
   const { t, lang: uiLang, setLang } = useI18n();
   const [query, setQuery] = useState('');
@@ -83,6 +88,7 @@ export default function SceneHUD({
 
   const isEmpty = data.galaxies.length === 0;
   const showPanel = mode !== null || Boolean(focusedNode);
+  const backupIsStale = shouldShowBackupReminder(isEmpty, lastBackupAt);
 
   return (
     <div className="mu-hud">
@@ -196,6 +202,20 @@ export default function SceneHUD({
           </div>
         )}
       </div>
+
+      {backupIsStale && mode === null && (
+        <div className="mu-backup-reminder">
+          <span>{lastBackupAt ? t('hud.backupReminderStale') : t('hud.backupReminderNever')}</span>
+          <button type="button" className="mu-backup-reminder-btn" onClick={onExportBackup}>
+            {t('hud.backupBtn')}
+          </button>
+          {!autoBackupOn && isAutoBackupSupported() && (
+            <button type="button" className="mu-backup-reminder-link" onClick={onSetupAutoBackup}>
+              {t('hud.autoBackupSetup')}
+            </button>
+          )}
+        </div>
+      )}
 
       {isEmpty && mode === null && (
         <div className="mu-empty-state">

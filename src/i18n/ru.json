@@ -40,6 +40,9 @@
   "hud.statsBtn": "Итоги",
   "hud.importBtn": "Импорт",
   "hud.backupBtn": "Копия",
+  "hud.backupReminderNever": "Вы ещё ни разу не сохраняли копию данных",
+  "hud.backupReminderStale": "Последняя копия была больше 2 недель назад",
+  "hud.autoBackupSetup": "Настроить автосохранение в папку",
 
   "import.title": "Импорт из другого AI",
   "import.intro": "Скопируйте промпт из файла import/EXTRACT_PROMPT.md (или CLAUDE_EXTRACT_PROMPT.md для Claude) в чат с AI, где накопилась история общения, и вставьте сюда его ответ — это должен быть JSON.",

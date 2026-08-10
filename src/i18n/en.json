@@ -40,6 +40,9 @@
   "hud.statsBtn": "Summary",
   "hud.importBtn": "Import",
   "hud.backupBtn": "Backup",
+  "hud.backupReminderNever": "You haven't backed up your data yet",
+  "hud.backupReminderStale": "Your last backup was over 2 weeks ago",
+  "hud.autoBackupSetup": "Set up auto-backup to a folder",
 
   "import.title": "Import from another AI",
   "import.intro": "Copy the prompt from import/EXTRACT_PROMPT.md (or CLAUDE_EXTRACT_PROMPT.md for Claude) into a chat with an AI that has history with you, then paste its reply here — it should be JSON.",

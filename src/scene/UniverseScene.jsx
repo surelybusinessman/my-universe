@@ -28,7 +28,16 @@ import {
 import './UniverseScene.css';
 
 
-export default function UniverseScene({ data, lang, onLockNow, onUpdateData, onExportBackup }) {
+export default function UniverseScene({
+  data,
+  lang,
+  onLockNow,
+  onUpdateData,
+  onExportBackup,
+  lastBackupAt,
+  autoBackupOn,
+  onSetupAutoBackup,
+}) {
   const controlsRef = useRef();
   const [focus, setFocus] = useState({ level: 'universe', galaxyId: null, nodeId: null });
   // Плотность пикселей подстраивается под реальную частоту кадров: на мощной
@@ -321,6 +330,9 @@ export default function UniverseScene({ data, lang, onLockNow, onUpdateData, onE
         onDeleteEdge={handleDeleteEdge}
         onImportData={onUpdateData}
         onExportBackup={onExportBackup}
+        lastBackupAt={lastBackupAt}
+        autoBackupOn={autoBackupOn}
+        onSetupAutoBackup={onSetupAutoBackup}
       />
     </div>
   );

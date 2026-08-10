@@ -84,6 +84,55 @@
   border-color: var(--mu-accent);
 }
 
+.mu-backup-reminder {
+  position: absolute;
+  top: 4.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  pointer-events: auto;
+  background: rgba(40, 24, 5, 0.75);
+  border: 1px solid #a8762f;
+  border-radius: 1.2rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  color: #f0d9ae;
+  backdrop-filter: blur(6px);
+  max-width: min(90vw, 480px);
+}
+
+.mu-backup-reminder-btn {
+  background: #a8762f;
+  border: none;
+  color: #05060f;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.mu-backup-reminder-btn:hover {
+  opacity: 0.9;
+}
+
+.mu-backup-reminder-link {
+  background: none;
+  border: none;
+  color: #f0d9ae;
+  text-decoration: underline;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.mu-backup-reminder-link:hover {
+  color: #fff;
+}
+
 .mu-back-btn {
   position: absolute;
   top: 4.5rem;

@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import LockScreen from './auth/LockScreen';
-import { loadContainer, saveContainer } from './data/store';
+import { loadContainer, saveContainer, loadMeta, saveMeta } from './data/store';
 import { downloadBackup } from './data/backup';
+import { pickAutoBackupFolder, ensureWritePermission, writeAutoBackup } from './data/autoBackup';
 import { encryptData } from './crypto/vault';
 import './App.css';
 
@@ -18,11 +19,17 @@ function AppShell() {
   const [phase, setPhase] = useState('loading'); // loading | lock | unlocked
   const [container, setContainer] = useState(null);
   const [session, setSession] = useState(null); // { masterKey, masterKeyBytes, data }
+  const [lastBackupAt, setLastBackupAt] = useState(null);
+  const [autoBackupDir, setAutoBackupDir] = useState(null);
 
   useEffect(() => {
     loadContainer().then((c) => {
       setContainer(c);
       setPhase('lock');
+    });
+    loadMeta().then((meta) => {
+      setLastBackupAt(meta.lastBackupAt || null);
+      setAutoBackupDir(meta.autoBackupDirHandle || null);
     });
   }, []);
 
@@ -45,7 +52,11 @@ function AppShell() {
   // Скачиваем именно зашифрованный контейнер, а не расшифрованные данные:
   // файл можно спокойно хранить в облаке или на флешке.
   const handleExportBackup = useCallback(() => {
-    if (container) downloadBackup(container);
+    if (!container) return;
+    downloadBackup(container);
+    const stamp = new Date().toISOString();
+    saveMeta({ lastBackupAt: stamp });
+    setLastBackupAt(stamp);
   }, [container]);
 
   // Каждое сохранение из редактора шифрует свежий снимок данных тем же masterKey
@@ -56,9 +67,30 @@ function AppShell() {
       const updatedContainer = await encryptData(container, session.masterKey, newData);
       await saveContainer(updatedContainer);
       setContainer(updatedContainer);
+      // Лучшее из возможного: если папка для автокопии выбрана, пишем туда же.
+      // Право могло быть отозвано пользователем в системе — тогда просто молчим,
+      // основная копия в IndexedDB в любом случае уже сохранена.
+      if (autoBackupDir) {
+        writeAutoBackup(autoBackupDir, updatedContainer).catch(() => {});
+      }
     },
-    [container, session]
+    [container, session, autoBackupDir]
   );
+
+  // Запускается только по клику пользователя — showDirectoryPicker и
+  // requestPermission требуют пользовательского жеста.
+  const handleSetupAutoBackup = useCallback(async () => {
+    try {
+      const dirHandle = await pickAutoBackupFolder();
+      const granted = await ensureWritePermission(dirHandle);
+      if (!granted) return;
+      await saveMeta({ autoBackupDirHandle: dirHandle });
+      setAutoBackupDir(dirHandle);
+      if (container) await writeAutoBackup(dirHandle, container);
+    } catch {
+      // Пользователь закрыл диалог выбора папки — ничего не делаем.
+    }
+  }, [container]);
 
   // Автоблокировка по бездействию: сбрасываем сессию из памяти и возвращаемся на экран пароля.
   useEffect(() => {
@@ -99,6 +131,9 @@ function AppShell() {
         onLockNow={lockNow}
         onUpdateData={handleUpdateData}
         onExportBackup={handleExportBackup}
+        lastBackupAt={lastBackupAt}
+        autoBackupOn={Boolean(autoBackupDir)}
+        onSetupAutoBackup={handleSetupAutoBackup}
       />
     </Suspense>
   );
