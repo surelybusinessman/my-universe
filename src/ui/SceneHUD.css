@@ -460,3 +460,87 @@
   padding-top: 1rem;
   margin-top: 1.5rem;
 }
+
+/* Кнопки, которыми управляют пальцем, а не курсором — минимум 44px по высоте
+   (рекомендация Apple/Google для целей нажатия). */
+.mu-hud-btn,
+.mu-fab-btn,
+.mu-back-btn,
+.mu-crumb:disabled,
+.mu-detail-close {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .mu-hud-top {
+    top: 0.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .mu-breadcrumb {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mu-hud-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    width: 100%;
+  }
+
+  .mu-hud-btn {
+    padding: 0.5rem 0.8rem;
+  }
+
+  /* На широком экране кнопка "назад" стоит под верхней панелью с
+     фиксированным отступом; на телефоне эта панель может занять 2 строки,
+     поэтому переносим "назад" вниз — там она не пересечётся ни с чем. */
+  .mu-back-btn {
+    top: auto;
+    bottom: 1rem;
+    left: 0.75rem;
+  }
+
+  .mu-fab-row {
+    bottom: 1rem;
+    right: 0.75rem;
+  }
+
+  .mu-backup-reminder {
+    top: auto;
+    bottom: 4.75rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    transform: none;
+    max-width: none;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .mu-search-wrap {
+    width: calc(100vw - 1.5rem);
+  }
+
+  /* Правая панель редактирования/деталей превращается в лист снизу —
+     на узком экране боковая колонка в 90vw выглядела как тоннель. */
+  .mu-detail-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 80vh;
+    border-left: none;
+    border-top: 1px solid var(--mu-border);
+    border-radius: 18px 18px 0 0;
+    padding: 2.25rem 1.25rem 1.5rem;
+  }
+}

@@ -40,9 +40,17 @@ export default function UniverseScene({
 }) {
   const controlsRef = useRef();
   const [focus, setFocus] = useState({ level: 'universe', galaxyId: null, nodeId: null });
+  // Телефоны часто имеют devicePixelRatio 2-3: без потолка это втрое больше
+  // пикселей на кадр при заведомо более слабом GPU, чем у настольной машины.
+  const [isMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
   // Плотность пикселей подстраивается под реальную частоту кадров: на мощной
   // машине картинка рендерится в 4K, на слабой — мягко опускается вместо рывков.
-  const [dpr, setDpr] = useState(() => Math.min(1.5, window.devicePixelRatio || 1));
+  const [dpr, setDpr] = useState(() => {
+    const base = Math.min(1.5, window.devicePixelRatio || 1);
+    return isMobile ? Math.min(1.25, base) : base;
+  });
 
   const galaxyPositions = useMemo(() => layoutGalaxies(data.galaxies), [data.galaxies]);
   const { byId: nodePositionsById, byGalaxy: nodesByGalaxy } = useMemo(
@@ -255,7 +263,7 @@ export default function UniverseScene({
         <PerformanceMonitor
           bounds={() => [55, 95]}
           flipflops={3}
-          onIncline={() => setDpr((d) => Math.min(2.5, +(d + 0.25).toFixed(2)))}
+          onIncline={() => setDpr((d) => Math.min(isMobile ? 1.5 : 2.5, +(d + 0.25).toFixed(2)))}
           onDecline={() => setDpr((d) => Math.max(1, +(d - 0.25).toFixed(2)))}
           onFallback={() => setDpr(1)}
         />
@@ -286,7 +294,9 @@ export default function UniverseScene({
         />
 
         {/* MSAA поверх bloom почти не даёт разницы, но стоит целого прохода
-            по буферу — сглаживание берут на себя свечение и высокий dpr. */}
+            по буферу — сглаживание берут на себя свечение и высокий dpr.
+            На телефоне убираем хроматическую аберрацию и зерно — это чисто
+            декоративные проходы, а GPU там обычно заметно слабее. */}
         <EffectComposer multisampling={0} enableNormalPass={false}>
           <Bloom
             intensity={0.95}
@@ -295,16 +305,20 @@ export default function UniverseScene({
             mipmapBlur
             radius={0.78}
           />
-          {/* Лёгкая хроматическая аберрация по краям — «стекло объектива» */}
-          <ChromaticAberration
-            offset={[0.0005, 0.0007]}
-            blendFunction={BlendFunction.NORMAL}
-            radialModulation
-            modulationOffset={0.45}
-          />
+          {!isMobile && (
+            // Лёгкая хроматическая аберрация по краям — «стекло объектива»
+            <ChromaticAberration
+              offset={[0.0005, 0.0007]}
+              blendFunction={BlendFunction.NORMAL}
+              radialModulation
+              modulationOffset={0.45}
+            />
+          )}
           <Vignette offset={0.22} darkness={0.72} blendFunction={BlendFunction.NORMAL} />
-          {/* Едва заметное зерно убирает полосы на тёмных градиентах космоса */}
-          <Noise opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
+          {!isMobile && (
+            // Едва заметное зерно убирает полосы на тёмных градиентах космоса
+            <Noise opacity={0.025} blendFunction={BlendFunction.OVERLAY} />
+          )}
         </EffectComposer>
 
         <Preload all />

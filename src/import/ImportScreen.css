@@ -154,3 +154,20 @@
   border-color: var(--mu-accent);
   color: var(--mu-accent);
 }
+
+@media (max-width: 640px) {
+  .mu-import-content {
+    padding: 4.5rem 1.1rem 3rem;
+  }
+
+  .mu-import-close {
+    top: 1rem;
+    right: 1rem;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .mu-import-decision-btn {
+    min-height: 40px;
+  }
+}

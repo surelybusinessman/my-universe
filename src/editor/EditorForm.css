@@ -176,6 +176,7 @@
   padding: 0.6rem 1.1rem;
   font-size: 0.85rem;
   border: 1px solid transparent;
+  min-height: 44px;
 }
 
 .mu-btn-primary {
@@ -221,4 +222,10 @@
   font-size: 0.82rem;
   color: var(--mu-text-dim);
   flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+  .mu-form-row {
+    grid-template-columns: 1fr;
+  }
 }
