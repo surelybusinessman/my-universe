@@ -1,10 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages отдаёт сайт из подпапки /my-universe/, Cloudflare Pages — с корня
-// домена. VITE_BASE_PATH задаётся только в workflow для GitHub Pages.
+// Единственный хостинг — Cloudflare Pages, отдаёт сайт с корня домена.
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.VITE_BASE_PATH || '/',
+  base: '/',
   plugins: [react()],
 })
