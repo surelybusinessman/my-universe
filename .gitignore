@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Файлы резервных копий пользователя (зашифрованы, но не должны попадать в git)
+my-universe-backup-*.json
