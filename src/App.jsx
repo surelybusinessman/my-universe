@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import LockScreen from './auth/LockScreen';
 import { loadContainer, saveContainer, loadMeta, saveMeta } from './data/store';
 import { downloadBackup } from './data/backup';
 import { pickAutoBackupFolder, ensureWritePermission, writeAutoBackup } from './data/autoBackup';
-import { encryptData } from './crypto/vault';
+import { pullRemoteVault, createDebouncedPusher } from './data/sync';
+import { encryptData, decryptData } from './crypto/vault';
+import SyncConflictDialog from './ui/SyncConflictDialog';
 import './App.css';
 
 // Three.js со всей 3D-обвязкой весит больше мегабайта и нужен только после входа.
@@ -21,12 +23,32 @@ function AppShell() {
   const [session, setSession] = useState(null); // { masterKey, masterKeyBytes, data }
   const [lastBackupAt, setLastBackupAt] = useState(null);
   const [autoBackupDir, setAutoBackupDir] = useState(null);
+  const [conflict, setConflict] = useState(null); // { current, mine } | null
+
+  // updatedAt последней версии, о которой точно знает сервер — не состояние,
+  // потому что его изменение не должно вызывать перерисовку.
+  const remoteBaseRef = useRef(null);
+  const pushRef = useRef(null);
+  if (!pushRef.current) pushRef.current = createDebouncedPusher();
 
   useEffect(() => {
-    loadContainer().then((c) => {
-      setContainer(c);
+    (async () => {
+      const localContainer = await loadContainer();
+      // GitHub Pages не имеет этого эндпоинта вовсе, Cloudflare — только если
+      // подключён KV. В обоих случаях отсутствие ответа означает "работаем
+      // без синхронизации", а не ошибку.
+      const pullResult = await pullRemoteVault();
+      let effective = localContainer;
+      if (pullResult.ok && pullResult.container) {
+        remoteBaseRef.current = pullResult.container.updatedAt;
+        if (!localContainer || pullResult.container.updatedAt > localContainer.updatedAt) {
+          effective = pullResult.container;
+          await saveContainer(effective);
+        }
+      }
+      setContainer(effective);
       setPhase('lock');
-    });
+    })();
     loadMeta().then((meta) => {
       setLastBackupAt(meta.lastBackupAt || null);
       setAutoBackupDir(meta.autoBackupDirHandle || null);
@@ -42,6 +64,10 @@ function AppShell() {
   const handlePersistContainer = useCallback(async (newContainer) => {
     await saveContainer(newContainer);
     setContainer(newContainer);
+    // Ручное восстановление из файла или создание новой вселенной — точка
+    // отсчёта для сервера неизвестна; следующий push сверится с ним заново
+    // и, если там что-то есть, сам поднимет диалог конфликта.
+    remoteBaseRef.current = null;
   }, []);
 
   const lockNow = useCallback(() => {
@@ -73,9 +99,45 @@ function AppShell() {
       if (autoBackupDir) {
         writeAutoBackup(autoBackupDir, updatedContainer).catch(() => {});
       }
+      pushRef.current(updatedContainer, remoteBaseRef.current, (result) => {
+        if (result.ok) {
+          remoteBaseRef.current = result.updatedAt;
+        } else if (result.reason === 'CONFLICT') {
+          setConflict({ current: result.current, mine: updatedContainer });
+        }
+        // NETWORK / NOT_CONFIGURED / ERROR: локальная копия уже сохранена,
+        // молча пробуем снова при следующей правке.
+      });
     },
     [container, session, autoBackupDir]
   );
+
+  // Оставляем свою версию: перезаписываем сервер, теперь зная актуальный updatedAt как базу.
+  const handleKeepMine = useCallback(() => {
+    if (!conflict) return;
+    const { mine, current } = conflict;
+    setConflict(null);
+    pushRef.current(mine, current.updatedAt, (result) => {
+      if (result.ok) {
+        remoteBaseRef.current = result.updatedAt;
+      } else if (result.reason === 'CONFLICT') {
+        setConflict({ current: result.current, mine });
+      }
+    });
+  }, [conflict]);
+
+  // Берём версию с другого устройства: оба контейнера зашифрованы одним masterKey,
+  // расшифровываем без пароля через уже открытую сессию.
+  const handleTakeRemote = useCallback(async () => {
+    if (!conflict || !session) return;
+    const { current } = conflict;
+    const data = await decryptData(session.masterKey, current);
+    await saveContainer(current);
+    setContainer(current);
+    setSession((s) => (s ? { ...s, data } : s));
+    remoteBaseRef.current = current.updatedAt;
+    setConflict(null);
+  }, [conflict, session]);
 
   // Запускается только по клику пользователя — showDirectoryPicker и
   // requestPermission требуют пользовательского жеста.
@@ -124,18 +186,21 @@ function AppShell() {
   }
 
   return (
-    <Suspense fallback={<div className="mu-loading">…</div>}>
-      <UniverseScene
-        data={session.data}
-        lang={lang}
-        onLockNow={lockNow}
-        onUpdateData={handleUpdateData}
-        onExportBackup={handleExportBackup}
-        lastBackupAt={lastBackupAt}
-        autoBackupOn={Boolean(autoBackupDir)}
-        onSetupAutoBackup={handleSetupAutoBackup}
-      />
-    </Suspense>
+    <>
+      <Suspense fallback={<div className="mu-loading">…</div>}>
+        <UniverseScene
+          data={session.data}
+          lang={lang}
+          onLockNow={lockNow}
+          onUpdateData={handleUpdateData}
+          onExportBackup={handleExportBackup}
+          lastBackupAt={lastBackupAt}
+          autoBackupOn={Boolean(autoBackupDir)}
+          onSetupAutoBackup={handleSetupAutoBackup}
+        />
+      </Suspense>
+      {conflict && <SyncConflictDialog onKeepMine={handleKeepMine} onTakeRemote={handleTakeRemote} />}
+    </>
   );
 }
 

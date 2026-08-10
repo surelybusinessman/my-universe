@@ -44,6 +44,11 @@
   "hud.backupReminderStale": "Your last backup was over 2 weeks ago",
   "hud.autoBackupSetup": "Set up auto-backup to a folder",
 
+  "sync.conflictTitle": "Edits diverged",
+  "sync.conflictBody": "Your universe changed on another device while you were editing it here. These can't be merged automatically — pick which version to keep. The other one will be discarded.",
+  "sync.keepMine": "Keep this version",
+  "sync.takeRemote": "Take the other device's version",
+
   "import.title": "Import from another AI",
   "import.intro": "Copy the prompt from import/EXTRACT_PROMPT.md (or CLAUDE_EXTRACT_PROMPT.md for Claude) into a chat with an AI that has history with you, then paste its reply here — it should be JSON.",
   "import.sourceLabel": "Source",

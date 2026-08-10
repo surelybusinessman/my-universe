@@ -5,6 +5,7 @@ import {
   unlockWithRecoveryCode,
   changePassword,
   encryptData,
+  decryptData,
   generateRecoveryCode,
   normalizeRecoveryCode,
 } from './vault';
@@ -100,6 +101,23 @@ describe('backward compatibility with a version-1 container', () => {
   it('unlocks the recorded fixture with its recorded recovery code', async () => {
     const session = await unlockWithRecoveryCode(fixtureV1.container, fixtureV1.recoveryCode);
     expect(session.data).toEqual(fixtureV1.expectedData);
+  });
+});
+
+describe('decryptData', () => {
+  it('decrypts a container using only the masterKey, without a password', async () => {
+    const { container, masterKey } = await createVault(PASSWORD, SAMPLE_DATA);
+    const data = await decryptData(masterKey, container);
+    expect(data).toEqual(SAMPLE_DATA);
+  });
+
+  it('reads a later encryptData revision with the same masterKey (sync scenario)', async () => {
+    const { container, masterKey } = await createVault(PASSWORD, SAMPLE_DATA);
+    const revised = { ...SAMPLE_DATA, nodes: [{ id: 'n_new' }] };
+    const newContainer = await encryptData(container, masterKey, revised);
+
+    const data = await decryptData(masterKey, newContainer);
+    expect(data).toEqual(revised);
   });
 });
 

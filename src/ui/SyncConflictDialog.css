@@ -1,0 +1,68 @@
+.mu-sync-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 3, 10, 0.7);
+  backdrop-filter: blur(4px);
+  padding: 1.5rem;
+}
+
+.mu-sync-dialog {
+  width: min(420px, 100%);
+  background: rgba(8, 11, 26, 0.96);
+  border: 1px solid var(--mu-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+}
+
+.mu-sync-dialog h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--mu-text);
+}
+
+.mu-sync-dialog p {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--mu-text-dim);
+}
+
+.mu-sync-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.mu-sync-actions .mu-btn-ghost {
+  background: none;
+  border: 1px solid var(--mu-border);
+  color: var(--mu-text-dim);
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+.mu-sync-actions .mu-btn-ghost:hover {
+  color: var(--mu-text);
+  border-color: var(--mu-text-dim);
+}
+
+.mu-sync-primary {
+  flex: 1;
+  background: linear-gradient(135deg, var(--mu-accent), var(--mu-accent-2));
+  color: #05060f;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+.mu-sync-primary:hover {
+  opacity: 0.9;
+}

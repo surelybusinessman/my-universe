@@ -183,6 +183,17 @@ export async function encryptData(container, masterKey, dataObj) {
   return { ...container, data, updatedAt: new Date().toISOString() };
 }
 
+/**
+ * Расшифровывает data контейнера уже открытым masterKey, без пароля и без
+ * распаковки обёрток. Пары контейнеров, порождённые одним и тем же вызовом
+ * createVault (например, версии одной вселенной с разных устройств), делят
+ * один masterKey — меняется только зашифрованный контент.
+ */
+export async function decryptData(masterKey, container) {
+  const bytes = await aesDecryptBytes(masterKey, container.data.iv, container.data.data);
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
 /** Меняет пароль, не трогая ни сами данные, ни код восстановления. */
 export async function changePassword(container, masterKeyBytes, newPassword) {
   const salt = randomBytes(16);
