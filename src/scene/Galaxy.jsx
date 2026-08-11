@@ -1,8 +1,9 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getGlowTexture, getNebulaTexture, getDustTexture } from './textures';
 import { mulberry32, seedFromId, galaxyRadius } from './layout';
+import { dampOpacity } from './dimSmoothing';
 
 const DUST_COUNT = 850;
 const ARMS = 2;
@@ -117,6 +118,12 @@ function Nebula({ color, radius, seed }) {
   );
 }
 
+// Целевая непрозрачность ядра галактики в приглушённом и обычном состоянии.
+// Внутреннее ядро замешано на 55% в белый и ещё умножено на 1.5 — оно
+// специально overdriven, чтобы после bloom читаться как раскалённый центр.
+const CORE_OUTER_OPACITY = { dimmed: 0.1, normal: 0.28 };
+const CORE_INNER_OPACITY = { dimmed: 0.18, normal: 0.6 };
+
 /** Ядро галактики — яркий центр, видимый с любого расстояния. */
 function GalaxyCore({ color, radius, dimmed }) {
   const glowTexture = useMemo(() => getGlowTexture(), []);
@@ -124,15 +131,32 @@ function GalaxyCore({ color, radius, dimmed }) {
     () => new THREE.Color(color).lerp(new THREE.Color('#ffffff'), 0.55).multiplyScalar(1.5),
     [color]
   );
+  const outerMatRef = useRef();
+  const innerMatRef = useRef();
+
+  // Почему плавно, а не мгновенной подменой opacity — см. dimSmoothing.js:
+  // это овердрайвенный почти-белый спрайт, и мгновенный скачок его яркости
+  // ровно в момент смены уровня фокуса — источник "белой вспышки".
+  useFrame((_, delta) => {
+    const outerTarget = dimmed ? CORE_OUTER_OPACITY.dimmed : CORE_OUTER_OPACITY.normal;
+    const innerTarget = dimmed ? CORE_INNER_OPACITY.dimmed : CORE_INNER_OPACITY.normal;
+    if (outerMatRef.current) {
+      outerMatRef.current.opacity = dampOpacity(outerMatRef.current.opacity, outerTarget, delta);
+    }
+    if (innerMatRef.current) {
+      innerMatRef.current.opacity = dampOpacity(innerMatRef.current.opacity, innerTarget, delta);
+    }
+  });
 
   return (
     <group>
       <sprite scale={radius * 1.5}>
         <spriteMaterial
+          ref={outerMatRef}
           map={glowTexture}
           color={color}
           transparent
-          opacity={dimmed ? 0.1 : 0.28}
+          opacity={dimmed ? CORE_OUTER_OPACITY.dimmed : CORE_OUTER_OPACITY.normal}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
@@ -140,10 +164,11 @@ function GalaxyCore({ color, radius, dimmed }) {
       </sprite>
       <sprite scale={radius * 0.55}>
         <spriteMaterial
+          ref={innerMatRef}
           map={glowTexture}
           color={coreColor}
           transparent
-          opacity={dimmed ? 0.18 : 0.6}
+          opacity={dimmed ? CORE_INNER_OPACITY.dimmed : CORE_INNER_OPACITY.normal}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
           toneMapped={false}
@@ -153,7 +178,7 @@ function GalaxyCore({ color, radius, dimmed }) {
   );
 }
 
-export default function Galaxy({ galaxy, center, nodeCount, dimmed, pickable = true, onClick }) {
+function Galaxy({ galaxy, center, nodeCount, dimmed, pickable = true, onClick }) {
   const seed = useMemo(() => seedFromId(galaxy.id), [galaxy.id]);
   const radius = useMemo(() => galaxyRadius(nodeCount), [nodeCount]);
 
@@ -181,3 +206,9 @@ export default function Galaxy({ galaxy, center, nodeCount, dimmed, pickable = t
     </group>
   );
 }
+
+// dpr — отдельное React-состояние в UniverseScene (адаптивный рендер по fps) и
+// меняется независимо от данных сцены; без memo каждый его тик перерисовывал бы
+// все галактики заново, хотя их собственные пропсы (galaxy/center/dimmed/...)
+// не менялись.
+export default memo(Galaxy);

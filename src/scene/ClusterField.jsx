@@ -1,22 +1,37 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, memo } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getGlowTexture } from './textures';
 import { clusterBounds } from './layout';
 import SceneLabel from './SceneLabel';
 import { pickLang } from '../i18n/pickLang';
+import { dampOpacity } from './dimSmoothing';
+
+const HALO_OPACITY = { dimmed: 0.035, normal: 0.075 };
 
 // Мягкая граница контейнера — тот же приём, что и ядро галактики (сфера-спрайт
 // с радиальным градиентом на аддитивном блендинге), но очень разрежённая и
 // крупная, чтобы читаться как область пространства, а не как объект.
+// Плавное появление/затухание — см. dimSmoothing.js.
 function ClusterHalo({ color, radius, dimmed }) {
   const glowTexture = useMemo(() => getGlowTexture(), []);
+  const matRef = useRef();
+
+  useFrame((_, delta) => {
+    const target = dimmed ? HALO_OPACITY.dimmed : HALO_OPACITY.normal;
+    if (matRef.current) {
+      matRef.current.opacity = dampOpacity(matRef.current.opacity, target, delta);
+    }
+  });
+
   return (
     <sprite scale={radius * 2.5}>
       <spriteMaterial
+        ref={matRef}
         map={glowTexture}
         color={color}
         transparent
-        opacity={dimmed ? 0.035 : 0.075}
+        opacity={dimmed ? HALO_OPACITY.dimmed : HALO_OPACITY.normal}
         blending={THREE.AdditiveBlending}
         depthWrite={false}
         toneMapped={false}
@@ -32,7 +47,7 @@ function ClusterHalo({ color, radius, dimmed }) {
  * Один компонент на весь список — контейнеров всегда мало (единицы), так что
  * это не создаёт заметной дополнительной нагрузки даже на телефоне.
  */
-export default function ClusterField({ data, lang, galaxyPositions, nodesByGalaxy, focus, onClusterClick }) {
+function ClusterField({ data, lang, galaxyPositions, nodesByGalaxy, focus, onClusterClick }) {
   const membersByCluster = useMemo(() => {
     const map = new Map();
     data.galaxies.forEach((g) => {
@@ -93,3 +108,8 @@ export default function ClusterField({ data, lang, galaxyPositions, nodesByGalax
     </group>
   );
 }
+
+// Все пропсы (data/galaxyPositions/nodesByGalaxy/focus/onClusterClick) стабильны
+// между тиками PerformanceMonitor (dpr) — memo избавляет от пересчёта раскладки
+// контейнеров на каждую такую перерисовку.
+export default memo(ClusterField);

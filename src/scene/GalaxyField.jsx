@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import Galaxy from './Galaxy';
 import StarNode from './StarNode';
 import SceneLabel from './SceneLabel';
 import { galaxyRadius } from './layout';
 import { pickLang } from '../i18n/pickLang';
 
-export default function GalaxyField({
+function GalaxyField({
   data,
   lang,
   galaxyPositions,
@@ -81,3 +82,8 @@ export default function GalaxyField({
     </group>
   );
 }
+
+// Пропсы стабильны между тиками адаптивного dpr (см. UniverseScene) — без memo
+// каждый такой тик заново рендерил бы все 66+ StarNode, хотя ни данные, ни
+// раскладка, ни фокус не менялись.
+export default memo(GalaxyField);

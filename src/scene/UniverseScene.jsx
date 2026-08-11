@@ -31,6 +31,26 @@ import {
 } from '../data/mutations';
 import './UniverseScene.css';
 
+// Вынесены из компонента: ни от пропсов, ни от состояния не зависят, а будучи
+// литералами внутри JSX пересоздавались бы новым объектом на каждый рендер
+// UniverseScene (в т.ч. на каждый тик адаптивного dpr). r3f сверяет их не по
+// ссылке, а по значению, так что лишний аллокейшн ничего не чинил — просто
+// мусорил кучу; стабильные ссылки читаются как обычные константы конфигурации.
+const GL_CONFIG = {
+  antialias: true,
+  powerPreference: 'high-performance',
+  alpha: false,
+  stencil: false,
+};
+const CAMERA_CONFIG = { position: [0, 140, 430], fov: 55, near: 0.5, far: 8000 };
+
+function handleCanvasCreated({ gl }) {
+  // ACES даёт кинематографичную передачу ярких участков: свечение звёзд
+  // не выгорает в плоское белое пятно, а сохраняет цвет.
+  gl.toneMapping = THREE.ACESFilmicToneMapping;
+  gl.toneMappingExposure = 1.15;
+  gl.outputColorSpace = THREE.SRGBColorSpace;
+}
 
 export default function UniverseScene({
   data,
@@ -310,23 +330,7 @@ export default function UniverseScene({
 
   return (
     <div className="mu-universe-wrap">
-      <Canvas
-        dpr={dpr}
-        gl={{
-          antialias: true,
-          powerPreference: 'high-performance',
-          alpha: false,
-          stencil: false,
-        }}
-        onCreated={({ gl }) => {
-          // ACES даёт кинематографичную передачу ярких участков: свечение звёзд
-          // не выгорает в плоское белое пятно, а сохраняет цвет.
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.15;
-          gl.outputColorSpace = THREE.SRGBColorSpace;
-        }}
-        camera={{ position: [0, 140, 430], fov: 55, near: 0.5, far: 8000 }}
-      >
+      <Canvas dpr={dpr} gl={GL_CONFIG} onCreated={handleCanvasCreated} camera={CAMERA_CONFIG}>
         {/* Разрешение подбирается шагами, а не рывком: при стабильно высоком fps
             картинка становится чётче, при просадке мягко отступает. flipflops
             не даёт зациклиться на границе, onFallback — аварийный минимум. */}

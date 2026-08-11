@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Line } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -23,7 +23,7 @@ function buildArc(a, b) {
   return curve.getPoints(CURVE_SEGMENTS);
 }
 
-export default function EdgesLayer({ edges, nodePositionsById }) {
+function EdgesLayer({ edges, nodePositionsById }) {
   const arcs = useMemo(() => {
     return edges
       .map((edge, i) => {
@@ -68,3 +68,7 @@ export default function EdgesLayer({ edges, nodePositionsById }) {
     </group>
   );
 }
+
+// edges/nodePositionsById стабильны между тиками адаптивного dpr — memo
+// избавляет от пересборки дуг связей на каждый такой тик.
+export default memo(EdgesLayer);

@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, memo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getGlowTexture, getStarburstTexture } from './textures';
@@ -14,7 +14,7 @@ const STATUS_STYLE = {
   abandoned: { core: 0.14, glow: 0.16, corona: false, burst: 0.0, twinkle: 0.0, gray: true },
 };
 
-export default function StarNode({ node, position, color, isFocused, onClick }) {
+function StarNode({ node, position, color, isFocused, onClick }) {
   const coreRef = useRef();
   const glowRef = useRef();
   const coronaRef = useRef();
@@ -190,3 +190,11 @@ export default function StarNode({ node, position, color, isFocused, onClick }) 
     </group>
   );
 }
+
+// Звёзд может быть много (десятки), а GalaxyField перерисовывается на каждый
+// тик адаптивного dpr (PerformanceMonitor). memo не даёт этому каскадом
+// доходить до каждой звезды, когда её собственные пропсы не менялись — правда,
+// это не спасает от смены focus.nodeId: onClick пересоздаётся в GalaxyField на
+// каждый его рендер, так что при реальной смене фокуса компонент всё равно
+// перерисуется целиком (это ожидаемо и дёшево — узлов десятки, а не тысячи).
+export default memo(StarNode);

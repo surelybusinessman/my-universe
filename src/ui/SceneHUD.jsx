@@ -1,16 +1,20 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense, memo } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 import { pickLang, pickLangMeta } from '../i18n/pickLang';
-import ClusterForm from '../editor/ClusterForm';
-import GalaxyForm from '../editor/GalaxyForm';
-import NodeForm from '../editor/NodeForm';
 import ConfirmDelete from '../editor/ConfirmDelete';
-import StatsScreen from '../analytics/StatsScreen';
 import { overallProgress, galaxyProgress } from '../analytics/stats';
-import ImportScreen from '../import/ImportScreen';
 import { shouldShowBackupReminder } from '../data/backupReminder';
 import { isAutoBackupSupported } from '../data/autoBackup';
 import './SceneHUD.css';
+
+// Формы редактора, статистика и импорт открываются по клику и нужны не сразу —
+// вынесены из основного чанка UniverseScene отдельными кусками, чтобы первый
+// кадр самой сцены (three.js уже и так ~1МБ) не тянул их за собой.
+const ClusterForm = lazy(() => import('../editor/ClusterForm'));
+const GalaxyForm = lazy(() => import('../editor/GalaxyForm'));
+const NodeForm = lazy(() => import('../editor/NodeForm'));
+const StatsScreen = lazy(() => import('../analytics/StatsScreen'));
+const ImportScreen = lazy(() => import('../import/ImportScreen'));
 
 function matchesQuery(node, lang, query) {
   const q = query.trim().toLowerCase();
@@ -31,7 +35,7 @@ function computeNodeEdges(edges, nodes, nodeId) {
     });
 }
 
-export default function SceneHUD({
+function SceneHUD({
   data,
   lang,
   focus,
@@ -157,21 +161,25 @@ export default function SceneHUD({
       </div>
 
       {statsOpen && (
-        <StatsScreen
-          data={data}
-          lang={lang}
-          onClose={() => setStatsOpen(false)}
-          onSelectNode={handleSelectFromStats}
-        />
+        <Suspense fallback={null}>
+          <StatsScreen
+            data={data}
+            lang={lang}
+            onClose={() => setStatsOpen(false)}
+            onSelectNode={handleSelectFromStats}
+          />
+        </Suspense>
       )}
 
       {importOpen && (
-        <ImportScreen
-          data={data}
-          lang={lang}
-          onClose={() => setImportOpen(false)}
-          onImport={onImportData}
-        />
+        <Suspense fallback={null}>
+          <ImportScreen
+            data={data}
+            lang={lang}
+            onClose={() => setImportOpen(false)}
+            onImport={onImportData}
+          />
+        </Suspense>
       )}
 
       {focus.level !== 'universe' && (
@@ -280,23 +288,25 @@ export default function SceneHUD({
               <button type="button" className="mu-detail-close" onClick={() => setMode(null)}>
                 ×
               </button>
-              <ClusterForm
-                initialCluster={mode === 'edit-cluster' ? currentCluster : null}
-                onSave={(patch) => {
-                  if (mode === 'edit-cluster') onUpdateCluster(currentCluster.id, patch);
-                  else onCreateCluster(patch);
-                  setMode(null);
-                }}
-                onDelete={
-                  mode === 'edit-cluster'
-                    ? () => {
-                        onDeleteCluster(currentCluster.id);
-                        setMode(null);
-                      }
-                    : undefined
-                }
-                onCancel={() => setMode(null)}
-              />
+              <Suspense fallback={null}>
+                <ClusterForm
+                  initialCluster={mode === 'edit-cluster' ? currentCluster : null}
+                  onSave={(patch) => {
+                    if (mode === 'edit-cluster') onUpdateCluster(currentCluster.id, patch);
+                    else onCreateCluster(patch);
+                    setMode(null);
+                  }}
+                  onDelete={
+                    mode === 'edit-cluster'
+                      ? () => {
+                          onDeleteCluster(currentCluster.id);
+                          setMode(null);
+                        }
+                      : undefined
+                  }
+                  onCancel={() => setMode(null)}
+                />
+              </Suspense>
             </>
           )}
 
@@ -305,26 +315,28 @@ export default function SceneHUD({
               <button type="button" className="mu-detail-close" onClick={() => setMode(null)}>
                 ×
               </button>
-              <GalaxyForm
-                initialGalaxy={mode === 'edit-galaxy' ? currentGalaxy : null}
-                clusters={data.clusters}
-                defaultClusterId={focus.level === 'cluster' ? focus.clusterId : null}
-                lang={lang}
-                onSave={(patch) => {
-                  if (mode === 'edit-galaxy') onUpdateGalaxy(currentGalaxy.id, patch);
-                  else onCreateGalaxy(patch);
-                  setMode(null);
-                }}
-                onDelete={
-                  mode === 'edit-galaxy'
-                    ? () => {
-                        onDeleteGalaxy(currentGalaxy.id);
-                        setMode(null);
-                      }
-                    : undefined
-                }
-                onCancel={() => setMode(null)}
-              />
+              <Suspense fallback={null}>
+                <GalaxyForm
+                  initialGalaxy={mode === 'edit-galaxy' ? currentGalaxy : null}
+                  clusters={data.clusters}
+                  defaultClusterId={focus.level === 'cluster' ? focus.clusterId : null}
+                  lang={lang}
+                  onSave={(patch) => {
+                    if (mode === 'edit-galaxy') onUpdateGalaxy(currentGalaxy.id, patch);
+                    else onCreateGalaxy(patch);
+                    setMode(null);
+                  }}
+                  onDelete={
+                    mode === 'edit-galaxy'
+                      ? () => {
+                          onDeleteGalaxy(currentGalaxy.id);
+                          setMode(null);
+                        }
+                      : undefined
+                  }
+                  onCancel={() => setMode(null)}
+                />
+              </Suspense>
             </>
           )}
 
@@ -333,32 +345,34 @@ export default function SceneHUD({
               <button type="button" className="mu-detail-close" onClick={() => setMode(null)}>
                 ×
               </button>
-              <NodeForm
-                initialNode={mode === 'edit-node' ? focusedNode : null}
-                lang={lang}
-                allNodes={data.nodes}
-                nodeEdges={
-                  mode === 'edit-node' && focusedNode
-                    ? computeNodeEdges(data.edges, data.nodes, focusedNode.id)
-                    : []
-                }
-                onSave={(patch) => {
-                  if (mode === 'edit-node') onUpdateNode(focusedNode.id, patch);
-                  else onCreateNode(patch);
-                  setMode(null);
-                }}
-                onDelete={
-                  mode === 'edit-node'
-                    ? () => {
-                        onDeleteNode(focusedNode.id);
-                        setMode(null);
-                      }
-                    : undefined
-                }
-                onCancel={() => setMode(null)}
-                onAddEdge={onAddEdge}
-                onDeleteEdge={onDeleteEdge}
-              />
+              <Suspense fallback={null}>
+                <NodeForm
+                  initialNode={mode === 'edit-node' ? focusedNode : null}
+                  lang={lang}
+                  allNodes={data.nodes}
+                  nodeEdges={
+                    mode === 'edit-node' && focusedNode
+                      ? computeNodeEdges(data.edges, data.nodes, focusedNode.id)
+                      : []
+                  }
+                  onSave={(patch) => {
+                    if (mode === 'edit-node') onUpdateNode(focusedNode.id, patch);
+                    else onCreateNode(patch);
+                    setMode(null);
+                  }}
+                  onDelete={
+                    mode === 'edit-node'
+                      ? () => {
+                          onDeleteNode(focusedNode.id);
+                          setMode(null);
+                        }
+                      : undefined
+                  }
+                  onCancel={() => setMode(null)}
+                  onAddEdge={onAddEdge}
+                  onDeleteEdge={onDeleteEdge}
+                />
+              </Suspense>
             </>
           )}
         </div>
@@ -366,6 +380,12 @@ export default function SceneHUD({
     </div>
   );
 }
+
+// SceneHUD перерисовывается вместе со всей UniverseScene на каждый тик
+// адаптивного dpr (PerformanceMonitor); почти все пропсы здесь либо примитивы,
+// либо стабильные ссылки (useCallback/useMemo выше по дереву, см.
+// UniverseScene.jsx), так что memo реально гасит эти лишние перерисовки 2D-панели.
+export default memo(SceneHUD);
 
 function DetailPanel({ node, lang, onClose, onEdit, onDelete }) {
   const { t } = useI18n();
