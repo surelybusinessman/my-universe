@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
 import { pickLang, pickLangMeta } from '../i18n/pickLang';
+import ClusterForm from '../editor/ClusterForm';
 import GalaxyForm from '../editor/GalaxyForm';
 import NodeForm from '../editor/NodeForm';
 import ConfirmDelete from '../editor/ConfirmDelete';
@@ -34,12 +35,17 @@ export default function SceneHUD({
   data,
   lang,
   focus,
+  currentCluster,
   currentGalaxy,
   focusedNode,
   onBack,
   onHome,
+  onGoToCluster,
   onSearchSelect,
   onLockNow,
+  onCreateCluster,
+  onUpdateCluster,
+  onDeleteCluster,
   onCreateGalaxy,
   onUpdateGalaxy,
   onDeleteGalaxy,
@@ -56,14 +62,15 @@ export default function SceneHUD({
 }) {
   const { t, lang: uiLang, setLang } = useI18n();
   const [query, setQuery] = useState('');
-  const [mode, setMode] = useState(null); // null | create-galaxy | edit-galaxy | create-node | edit-node
+  // null | create-cluster | edit-cluster | create-galaxy | edit-galaxy | create-node | edit-node
+  const [mode, setMode] = useState(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
 
   // Смена уровня карты (например, клик по другой звезде) закрывает открытую форму.
   useEffect(() => {
     setMode(null);
-  }, [focus.level, focus.galaxyId, focus.nodeId]);
+  }, [focus.level, focus.clusterId, focus.galaxyId, focus.nodeId]);
 
   const handleSelectFromStats = useCallback(
     (node) => {
@@ -97,6 +104,20 @@ export default function SceneHUD({
           <button type="button" className="mu-crumb" onClick={onHome} disabled={focus.level === 'universe'}>
             {t('hud.breadcrumbUniverse')}
           </button>
+          {currentCluster && (
+            <>
+              <span className="mu-crumb-sep">/</span>
+              <button
+                type="button"
+                className="mu-crumb mu-crumb-current"
+                style={{ color: currentCluster.color }}
+                onClick={() => onGoToCluster(currentCluster.id)}
+                disabled={focus.level === 'cluster'}
+              >
+                {pickLang(currentCluster.title, lang)}
+              </button>
+            </>
+          )}
           {currentGalaxy && (
             <>
               <span className="mu-crumb-sep">/</span>
@@ -161,7 +182,25 @@ export default function SceneHUD({
 
       {mode === null && focus.level === 'universe' && (
         <div className="mu-fab-row">
+          <button type="button" className="mu-fab-btn" onClick={() => setMode('create-cluster')}>
+            {t('editor.addClusterBtn')}
+          </button>
           <button type="button" className="mu-fab-btn" onClick={() => setMode('create-galaxy')}>
+            {t('editor.addGalaxyBtn')}
+          </button>
+        </div>
+      )}
+
+      {mode === null && focus.level === 'cluster' && (
+        <div className="mu-fab-row">
+          <button type="button" className="mu-fab-btn" onClick={() => setMode('edit-cluster')}>
+            ✎ {t('editor.editCluster')}
+          </button>
+          <button
+            type="button"
+            className="mu-fab-btn mu-fab-btn-primary"
+            onClick={() => setMode('create-galaxy')}
+          >
             {t('editor.addGalaxyBtn')}
           </button>
         </div>
@@ -236,6 +275,31 @@ export default function SceneHUD({
             />
           )}
 
+          {(mode === 'create-cluster' || mode === 'edit-cluster') && (
+            <>
+              <button type="button" className="mu-detail-close" onClick={() => setMode(null)}>
+                ×
+              </button>
+              <ClusterForm
+                initialCluster={mode === 'edit-cluster' ? currentCluster : null}
+                onSave={(patch) => {
+                  if (mode === 'edit-cluster') onUpdateCluster(currentCluster.id, patch);
+                  else onCreateCluster(patch);
+                  setMode(null);
+                }}
+                onDelete={
+                  mode === 'edit-cluster'
+                    ? () => {
+                        onDeleteCluster(currentCluster.id);
+                        setMode(null);
+                      }
+                    : undefined
+                }
+                onCancel={() => setMode(null)}
+              />
+            </>
+          )}
+
           {(mode === 'create-galaxy' || mode === 'edit-galaxy') && (
             <>
               <button type="button" className="mu-detail-close" onClick={() => setMode(null)}>
@@ -243,6 +307,9 @@ export default function SceneHUD({
               </button>
               <GalaxyForm
                 initialGalaxy={mode === 'edit-galaxy' ? currentGalaxy : null}
+                clusters={data.clusters}
+                defaultClusterId={focus.level === 'cluster' ? focus.clusterId : null}
+                lang={lang}
                 onSave={(patch) => {
                   if (mode === 'edit-galaxy') onUpdateGalaxy(currentGalaxy.id, patch);
                   else onCreateGalaxy(patch);

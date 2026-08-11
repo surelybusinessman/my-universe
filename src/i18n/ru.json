@@ -56,9 +56,11 @@
   "import.source.gemini": "Gemini",
   "import.source.claude": "Claude",
   "import.source.other": "Другое",
+  "import.fileLabel": "Выбрать файл с JSON (необязательно)",
   "import.pasteLabel": "Ответ AI (JSON)",
   "import.pastePlaceholder": "Вставьте сюда JSON-ответ от AI…",
   "import.parseButton": "Разобрать",
+  "import.errorFileRead": "Не удалось прочитать файл.",
   "import.errorInvalidJson": "Это не похоже на корректный JSON — проверьте, что скопировали ответ целиком.",
   "import.errorShape": "Неожиданная структура JSON.",
   "import.errorNoNodes": "В этом JSON не нашлось ни одной записи.",
@@ -118,6 +120,12 @@
   "source.gemini": "Импортировано из Gemini",
   "source.other": "Импортировано",
 
+  "editor.addCluster": "Новый план",
+  "editor.editCluster": "План",
+  "editor.cluster": "План (контейнер)",
+  "editor.clusterNone": "— без плана —",
+  "editor.clusterHint": "«План» объединяет несколько галактик в одну область — например, весь план на несколько лет вперёд. Внутри они по-прежнему разделены.",
+  "editor.clusterDeleteHint": "Галактики внутри не удалятся — они просто перестанут быть частью этого плана.",
   "editor.addGalaxy": "Новая галактика",
   "editor.editGalaxy": "Галактика",
   "editor.addStar": "Новая звезда",
@@ -154,5 +162,6 @@
   "editor.requiredTitle": "Укажите название хотя бы на одном языке",
   "editor.editPencil": "Редактировать",
   "editor.addGalaxyBtn": "+ Галактика",
-  "editor.addStarBtn": "+ Звезда"
+  "editor.addStarBtn": "+ Звезда",
+  "editor.addClusterBtn": "+ План"
 }

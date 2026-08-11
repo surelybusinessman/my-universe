@@ -32,6 +32,23 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
     }
   }, [text, data, t]);
 
+  // Ответ AI бывает на десятки килобайт — вставлять его руками, особенно
+  // с телефона, мучительно. Файл кладём в то же поле, дальше поток общий.
+  const handleFile = useCallback(
+    async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      setError('');
+      try {
+        setText(await file.text());
+      } catch {
+        setError(t('import.errorFileRead'));
+      }
+    },
+    [t]
+  );
+
   const setDecision = useCallback((index, decision) => {
     setRows((rs) => rs.map((r) => (r.index === index ? { ...r, decision } : r)));
   }, []);
@@ -75,6 +92,11 @@ export default function ImportScreen({ data, lang, onClose, onImport }) {
                 <option value="claude">{t('import.source.claude')}</option>
                 <option value="other">{t('import.source.other')}</option>
               </select>
+            </label>
+
+            <label className="mu-import-field">
+              {t('import.fileLabel')}
+              <input type="file" accept="application/json,.json" onChange={handleFile} />
             </label>
 
             <label className="mu-import-field">

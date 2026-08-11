@@ -6,6 +6,7 @@ import { downloadBackup } from './data/backup';
 import { pickAutoBackupFolder, ensureWritePermission, writeAutoBackup } from './data/autoBackup';
 import { pullRemoteVault, createDebouncedPusher } from './data/sync';
 import { encryptData, decryptData } from './crypto/vault';
+import { migrateVaultData } from './data/schema';
 import SyncConflictDialog from './ui/SyncConflictDialog';
 import './App.css';
 
@@ -57,7 +58,12 @@ function AppShell() {
 
   const handleUnlocked = useCallback((newContainer, sessionData) => {
     setContainer(newContainer);
-    setSession(sessionData);
+    // Данные могли быть зашифрованы более старой версией приложения (например,
+    // без уровня "План" над галактиками) — приводим к текущей схеме сразу
+    // после расшифровки, до того как что-либо в UI успеет их прочитать.
+    // Само по себе открытие вселенной ничего не дописывает на диск: миграция
+    // живёт в памяти, а на диск попадёт вместе со следующим обычным сохранением.
+    setSession({ ...sessionData, data: migrateVaultData(sessionData.data) });
     setPhase('unlocked');
   }, []);
 
@@ -131,7 +137,7 @@ function AppShell() {
   const handleTakeRemote = useCallback(async () => {
     if (!conflict || !session) return;
     const { current } = conflict;
-    const data = await decryptData(session.masterKey, current);
+    const data = migrateVaultData(await decryptData(session.masterKey, current));
     await saveContainer(current);
     setContainer(current);
     setSession((s) => (s ? { ...s, data } : s));

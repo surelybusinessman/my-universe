@@ -56,9 +56,11 @@
   "import.source.gemini": "Gemini",
   "import.source.claude": "Claude",
   "import.source.other": "Other",
+  "import.fileLabel": "Choose a JSON file (optional)",
   "import.pasteLabel": "AI reply (JSON)",
   "import.pastePlaceholder": "Paste the AI's JSON reply here…",
   "import.parseButton": "Parse",
+  "import.errorFileRead": "Could not read the file.",
   "import.errorInvalidJson": "This doesn't look like valid JSON — make sure you copied the whole reply.",
   "import.errorShape": "Unexpected JSON structure.",
   "import.errorNoNodes": "No entries found in this JSON.",
@@ -118,6 +120,12 @@
   "source.gemini": "Imported from Gemini",
   "source.other": "Imported",
 
+  "editor.addCluster": "New plan",
+  "editor.editCluster": "Plan",
+  "editor.cluster": "Plan (container)",
+  "editor.clusterNone": "— no plan —",
+  "editor.clusterHint": "A \"plan\" groups several galaxies into one region — for example, a whole multi-year plan. Inside it, they still stay separate.",
+  "editor.clusterDeleteHint": "Galaxies inside won't be deleted — they'll just stop being part of this plan.",
   "editor.addGalaxy": "New galaxy",
   "editor.editGalaxy": "Galaxy",
   "editor.addStar": "New star",
@@ -154,5 +162,6 @@
   "editor.requiredTitle": "Enter a title in at least one language",
   "editor.editPencil": "Edit",
   "editor.addGalaxyBtn": "+ Galaxy",
-  "editor.addStarBtn": "+ Star"
+  "editor.addStarBtn": "+ Star",
+  "editor.addClusterBtn": "+ Plan"
 }

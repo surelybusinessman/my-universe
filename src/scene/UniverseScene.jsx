@@ -11,11 +11,15 @@ import {
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import GalaxyField from './GalaxyField';
+import ClusterField from './ClusterField';
 import EdgesLayer from './EdgesLayer';
-import { layoutGalaxies, layoutAllNodes, galaxyRadius } from './layout';
+import { layoutGalaxies, layoutAllNodes, galaxyRadius, clusterBounds } from './layout';
 import SceneHUD from '../ui/SceneHUD';
 import { makeId } from '../data/schema';
 import {
+  addCluster,
+  updateCluster,
+  deleteCluster,
   addGalaxy,
   updateGalaxy,
   deleteGalaxy,
@@ -39,7 +43,10 @@ export default function UniverseScene({
   onSetupAutoBackup,
 }) {
   const controlsRef = useRef();
-  const [focus, setFocus] = useState({ level: 'universe', galaxyId: null, nodeId: null });
+  // level: 'universe' | 'cluster' | 'galaxy' | 'star'. clusterId хранится и на
+  // уровне 'galaxy'/'star', если эта галактика внутри контейнера — иначе
+  // "Назад" не знал бы, что нужно вернуться не сразу во вселенную, а в контейнер.
+  const [focus, setFocus] = useState({ level: 'universe', clusterId: null, galaxyId: null, nodeId: null });
   // Телефоны часто имеют devicePixelRatio 2-3: без потолка это втрое больше
   // пикселей на кадр при заведомо более слабом GPU, чем у настольной машины.
   const [isMobile] = useState(
@@ -52,7 +59,10 @@ export default function UniverseScene({
     return isMobile ? Math.min(1.25, base) : base;
   });
 
-  const galaxyPositions = useMemo(() => layoutGalaxies(data.galaxies), [data.galaxies]);
+  const galaxyPositions = useMemo(
+    () => layoutGalaxies(data.galaxies, data.clusters),
+    [data.galaxies, data.clusters]
+  );
   const { byId: nodePositionsById, byGalaxy: nodesByGalaxy } = useMemo(
     () => layoutAllNodes(data, galaxyPositions),
     [data, galaxyPositions]
@@ -63,6 +73,7 @@ export default function UniverseScene({
     [data.nodes, focus.nodeId]
   );
   const currentGalaxy = focus.galaxyId ? data.galaxies.find((g) => g.id === focus.galaxyId) : null;
+  const currentCluster = focus.clusterId ? data.clusters.find((c) => c.id === focus.clusterId) : null;
 
   const universeDistance = useMemo(
     () => Math.max(70, data.galaxies.length * 24) * 1.25 + 60,
@@ -79,8 +90,31 @@ export default function UniverseScene({
       0,
       true
     );
-    setFocus({ level: 'universe', galaxyId: null, nodeId: null });
+    setFocus({ level: 'universe', clusterId: null, galaxyId: null, nodeId: null });
   }, [universeDistance]);
+
+  const flyToCluster = useCallback(
+    (clusterId) => {
+      const members = data.galaxies.filter((g) => g.clusterId === clusterId);
+      const bounds = clusterBounds(members, galaxyPositions, nodesByGalaxy);
+      if (!bounds) {
+        flyToUniverse();
+        return;
+      }
+      const r = bounds.radius;
+      controlsRef.current?.setLookAt(
+        bounds.center.x + r * 1.4,
+        bounds.center.y + r * 0.9,
+        bounds.center.z + r * 1.4,
+        bounds.center.x,
+        bounds.center.y,
+        bounds.center.z,
+        true
+      );
+      setFocus({ level: 'cluster', clusterId, galaxyId: null, nodeId: null });
+    },
+    [data.galaxies, galaxyPositions, nodesByGalaxy, flyToUniverse]
+  );
 
   const flyToGalaxy = useCallback(
     (galaxyId) => {
@@ -102,31 +136,44 @@ export default function UniverseScene({
         pos.z,
         true
       );
-      setFocus({ level: 'galaxy', galaxyId, nodeId: null });
+      const galaxy = data.galaxies.find((g) => g.id === galaxyId);
+      setFocus({ level: 'galaxy', clusterId: galaxy?.clusterId ?? null, galaxyId, nodeId: null });
     },
-    [galaxyPositions, nodesByGalaxy, flyToUniverse]
+    [data.galaxies, galaxyPositions, nodesByGalaxy, flyToUniverse]
   );
 
-  const flyToNode = useCallback((node, position) => {
-    controlsRef.current?.setLookAt(
-      position.x + 4.2,
-      position.y + 2.4,
-      position.z + 5.4,
-      position.x,
-      position.y,
-      position.z,
-      true
-    );
-    setFocus((f) => ({ level: 'star', galaxyId: f.galaxyId ?? node.galaxyId, nodeId: node.id }));
-  }, []);
+  const flyToNode = useCallback(
+    (node, position) => {
+      controlsRef.current?.setLookAt(
+        position.x + 4.2,
+        position.y + 2.4,
+        position.z + 5.4,
+        position.x,
+        position.y,
+        position.z,
+        true
+      );
+      const galaxy = data.galaxies.find((g) => g.id === node.galaxyId);
+      setFocus((f) => ({
+        level: 'star',
+        clusterId: galaxy?.clusterId ?? f.clusterId ?? null,
+        galaxyId: f.galaxyId ?? node.galaxyId,
+        nodeId: node.id,
+      }));
+    },
+    [data.galaxies]
+  );
 
   const handleBack = useCallback(() => {
     if (focus.level === 'star') {
       flyToGalaxy(focus.galaxyId);
     } else if (focus.level === 'galaxy') {
+      if (focus.clusterId) flyToCluster(focus.clusterId);
+      else flyToUniverse();
+    } else if (focus.level === 'cluster') {
       flyToUniverse();
     }
-  }, [focus, flyToGalaxy, flyToUniverse]);
+  }, [focus, flyToGalaxy, flyToCluster, flyToUniverse]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -171,9 +218,32 @@ export default function UniverseScene({
 
   // --- Мутации данных: каждая строит новый снимок и тут же отправляет его на сохранение ---
 
+  const handleCreateCluster = useCallback(
+    (clusterPatch) => {
+      const cluster = { id: makeId('cl'), ...clusterPatch };
+      onUpdateData(addCluster(data, cluster));
+    },
+    [data, onUpdateData]
+  );
+
+  const handleUpdateCluster = useCallback(
+    (clusterId, patch) => {
+      onUpdateData(updateCluster(data, clusterId, patch));
+    },
+    [data, onUpdateData]
+  );
+
+  const handleDeleteCluster = useCallback(
+    (clusterId) => {
+      onUpdateData(deleteCluster(data, clusterId));
+      flyToUniverse();
+    },
+    [data, onUpdateData, flyToUniverse]
+  );
+
   const handleCreateGalaxy = useCallback(
     (galaxyPatch) => {
-      const galaxy = { id: makeId('g'), position: [0, 0, 0], ...galaxyPatch };
+      const galaxy = { id: makeId('g'), position: [0, 0, 0], clusterId: null, ...galaxyPatch };
       onUpdateData(addGalaxy(data, galaxy));
     },
     [data, onUpdateData]
@@ -274,6 +344,15 @@ export default function UniverseScene({
         <Stars radius={1200} depth={420} count={6000} factor={7} saturation={0} fade speed={0.3} />
         <Sparkles count={160} scale={700} size={3.6} speed={0.12} color="#9fd8ff" opacity={0.18} />
 
+        {/* Рисуется до GalaxyField — ореол контейнера фон, галактики и звёзды поверх него. */}
+        <ClusterField
+          data={data}
+          lang={lang}
+          galaxyPositions={galaxyPositions}
+          nodesByGalaxy={nodesByGalaxy}
+          focus={focus}
+          onClusterClick={flyToCluster}
+        />
         <GalaxyField
           data={data}
           lang={lang}
@@ -328,12 +407,17 @@ export default function UniverseScene({
         data={data}
         lang={lang}
         focus={focus}
+        currentCluster={currentCluster}
         currentGalaxy={currentGalaxy}
         focusedNode={focusedNode}
         onBack={handleBack}
         onHome={flyToUniverse}
+        onGoToCluster={flyToCluster}
         onSearchSelect={handleSearchSelect}
         onLockNow={onLockNow}
+        onCreateCluster={handleCreateCluster}
+        onUpdateCluster={handleUpdateCluster}
+        onDeleteCluster={handleDeleteCluster}
         onCreateGalaxy={handleCreateGalaxy}
         onUpdateGalaxy={handleUpdateGalaxy}
         onDeleteGalaxy={handleDeleteGalaxy}

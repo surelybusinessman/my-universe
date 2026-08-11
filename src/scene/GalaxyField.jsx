@@ -21,8 +21,16 @@ export default function GalaxyField({
 
         const placedNodes = nodesByGalaxy[galaxy.id] ?? [];
         const atUniverse = focus.level === 'universe';
+        // Если мы зашли внутрь контейнера ("План"), все его галактики остаются
+        // яркими — приглушается только всё, что снаружи текущего контейнера.
+        const inFocusedCluster =
+          focus.level === 'cluster' && Boolean(focus.clusterId) && galaxy.clusterId === focus.clusterId;
         // В режиме галактики остальные приглушаются — фокус на выбранной.
-        const isOther = !atUniverse && focus.galaxyId !== galaxy.id;
+        const isOther = !atUniverse && !inFocusedCluster && focus.galaxyId !== galaxy.id;
+        // Своя подпись у галактики в контейнере — только когда мы уже внутри
+        // этого контейнера (снаружи контейнер представлен одной общей подписью,
+        // чтобы "План" читался как единое целое, а не россыпь одинаковых имён).
+        const showLabel = galaxy.clusterId ? inFocusedCluster : atUniverse;
 
         return (
           <group key={galaxy.id}>
@@ -37,7 +45,7 @@ export default function GalaxyField({
               }}
             />
 
-            {atUniverse && (
+            {showLabel && (
               // Без distanceFactor подпись держит постоянный размер на экране —
               // на карте название галактики должно читаться с любого расстояния.
               <Html

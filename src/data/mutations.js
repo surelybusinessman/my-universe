@@ -5,6 +5,28 @@ function touched(data) {
   return { ...data, updatedAt: new Date().toISOString() };
 }
 
+export function addCluster(data, cluster) {
+  return touched({ ...data, clusters: [...data.clusters, cluster] });
+}
+
+export function updateCluster(data, clusterId, patch) {
+  return touched({
+    ...data,
+    clusters: data.clusters.map((c) => (c.id === clusterId ? { ...c, ...patch } : c)),
+  });
+}
+
+// Удаление контейнера не трогает сами галактики и звёзды в них — «План»
+// это только группировка для навигации, а не владелец данных. Галактики
+// просто отвязываются (clusterId -> null) и возвращаются к обычному показу.
+export function deleteCluster(data, clusterId) {
+  return touched({
+    ...data,
+    clusters: data.clusters.filter((c) => c.id !== clusterId),
+    galaxies: data.galaxies.map((g) => (g.clusterId === clusterId ? { ...g, clusterId: null } : g)),
+  });
+}
+
 export function addGalaxy(data, galaxy) {
   return touched({ ...data, galaxies: [...data.galaxies, galaxy] });
 }

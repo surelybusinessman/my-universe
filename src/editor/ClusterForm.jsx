@@ -1,33 +1,21 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n/I18nProvider';
-import { pickLang } from '../i18n/pickLang';
 import ConfirmDelete from './ConfirmDelete';
 import { DEFAULT_COLORS } from './colors';
 import './EditorForm.css';
 
 /**
- * clusters — список доступных контейнеров ("Планов") для привязки галактики.
- * defaultClusterId — с чем открыть форму создания (например, «+ Галактика»
- * из уже открытого контейнера сразу должна предлагать его же).
+ * Форма контейнера ("Плана") — минимальная: название на двух языках и цвет,
+ * как у галактики. Состав (какие галактики внутри) редактируется не здесь,
+ * а в форме самой галактики — контейнер не владеет ими, только группирует.
  */
-export default function GalaxyForm({
-  initialGalaxy,
-  clusters = [],
-  defaultClusterId = null,
-  lang,
-  onSave,
-  onDelete,
-  onCancel,
-}) {
+export default function ClusterForm({ initialCluster, onSave, onDelete, onCancel }) {
   const { t } = useI18n();
-  const isEditing = Boolean(initialGalaxy);
+  const isEditing = Boolean(initialCluster);
 
-  const [titleRu, setTitleRu] = useState(initialGalaxy?.title?.ru ?? '');
-  const [titleEn, setTitleEn] = useState(initialGalaxy?.title?.en ?? '');
-  const [color, setColor] = useState(initialGalaxy?.color ?? DEFAULT_COLORS[0]);
-  const [clusterId, setClusterId] = useState(
-    isEditing ? initialGalaxy?.clusterId ?? null : defaultClusterId
-  );
+  const [titleRu, setTitleRu] = useState(initialCluster?.title?.ru ?? '');
+  const [titleEn, setTitleEn] = useState(initialCluster?.title?.en ?? '');
+  const [color, setColor] = useState(initialCluster?.color ?? DEFAULT_COLORS[0]);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -36,12 +24,13 @@ export default function GalaxyForm({
       setError(t('editor.requiredTitle'));
       return;
     }
-    onSave({ title: { ru: titleRu.trim(), en: titleEn.trim() }, color, clusterId: clusterId || null });
+    onSave({ title: { ru: titleRu.trim(), en: titleEn.trim() }, color });
   };
 
   return (
     <form className="mu-editor-form" onSubmit={handleSubmit}>
-      <h2>{isEditing ? t('editor.editGalaxy') : t('editor.addGalaxy')}</h2>
+      <h2>{isEditing ? t('editor.editCluster') : t('editor.addCluster')}</h2>
+      <p className="mu-form-hint">{t('editor.clusterHint')}</p>
 
       <label>
         {t('editor.titleRu')}
@@ -74,20 +63,6 @@ export default function GalaxyForm({
         </div>
       </label>
 
-      {clusters.length > 0 && (
-        <label>
-          {t('editor.cluster')}
-          <select value={clusterId ?? ''} onChange={(e) => setClusterId(e.target.value || null)}>
-            <option value="">{t('editor.clusterNone')}</option>
-            {clusters.map((c) => (
-              <option key={c.id} value={c.id}>
-                {pickLang(c.title, lang)}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
       {error && <p className="mu-form-error">{error}</p>}
 
       <div className="mu-form-actions">
@@ -101,6 +76,7 @@ export default function GalaxyForm({
 
       {isEditing && onDelete && (
         <div className="mu-form-danger-zone">
+          <p className="mu-form-hint">{t('editor.clusterDeleteHint')}</p>
           <ConfirmDelete onConfirm={onDelete} />
         </div>
       )}
