@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { getGlowTexture } from './textures';
 import { clusterBounds } from './layout';
+import SceneLabel from './SceneLabel';
 import { pickLang } from '../i18n/pickLang';
 
 // Мягкая граница контейнера — тот же приём, что и ядро галактики (сфера-спрайт
@@ -60,17 +60,22 @@ export default function ClusterField({ data, lang, galaxyPositions, nodesByGalax
         const dimmed = focus.level === 'cluster' && focus.clusterId !== cluster.id;
 
         return (
-          <group key={cluster.id} position={[bounds.center.x, bounds.center.y, bounds.center.z]}>
-            <ClusterHalo color={cluster.color} radius={bounds.radius} dimmed={dimmed} />
+          <group key={cluster.id}>
+            <group position={[bounds.center.x, bounds.center.y, bounds.center.z]}>
+              <ClusterHalo color={cluster.color} radius={bounds.radius} dimmed={dimmed} />
+            </group>
 
             {focus.level === 'universe' && (
               // Общая подпись контейнера видна только снаружи — как только мы
               // внутри, каждая галактика уже подписана сама (см. GalaxyField).
-              <Html
-                position={[0, bounds.radius * 1.1, 0]}
-                center
-                zIndexRange={[0, 0]}
-                style={{ pointerEvents: 'auto' }}
+              // Позиция абсолютная, а не относительно группы: SceneLabel сам
+              // проецирует точку камерой, чтобы прятать подпись за спиной.
+              <SceneLabel
+                position={[
+                  bounds.center.x,
+                  bounds.center.y + bounds.radius * 1.1,
+                  bounds.center.z,
+                ]}
               >
                 <button
                   type="button"
@@ -80,7 +85,7 @@ export default function ClusterField({ data, lang, galaxyPositions, nodesByGalax
                 >
                   {pickLang(cluster.title, lang)}
                 </button>
-              </Html>
+              </SceneLabel>
             )}
           </group>
         );

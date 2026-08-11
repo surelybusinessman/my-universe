@@ -1,6 +1,6 @@
-import { Html } from '@react-three/drei';
 import Galaxy from './Galaxy';
 import StarNode from './StarNode';
+import SceneLabel from './SceneLabel';
 import { galaxyRadius } from './layout';
 import { pickLang } from '../i18n/pickLang';
 
@@ -39,6 +39,9 @@ export default function GalaxyField({
               center={center}
               nodeCount={placedNodes.length}
               dimmed={isOther}
+              // Внутри самой галактики её область клика не нужна и мешает —
+              // там кликают по звёздам, а не по галактике целиком.
+              pickable={focus.galaxyId !== galaxy.id}
               onClick={(e) => {
                 e.stopPropagation();
                 onGalaxyClick(galaxy.id);
@@ -48,11 +51,8 @@ export default function GalaxyField({
             {showLabel && (
               // Без distanceFactor подпись держит постоянный размер на экране —
               // на карте название галактики должно читаться с любого расстояния.
-              <Html
+              <SceneLabel
                 position={[center.x, center.y + galaxyRadius(placedNodes.length) * 1.15, center.z]}
-                center
-                zIndexRange={[0, 0]}
-                style={{ pointerEvents: 'auto' }}
               >
                 <button
                   type="button"
@@ -62,7 +62,7 @@ export default function GalaxyField({
                 >
                   {pickLang(galaxy.title, lang)}
                 </button>
-              </Html>
+              </SceneLabel>
             )}
 
             {placedNodes.map(({ node, position }) => (

@@ -153,7 +153,7 @@ function GalaxyCore({ color, radius, dimmed }) {
   );
 }
 
-export default function Galaxy({ galaxy, center, nodeCount, dimmed, onClick }) {
+export default function Galaxy({ galaxy, center, nodeCount, dimmed, pickable = true, onClick }) {
   const seed = useMemo(() => seedFromId(galaxy.id), [galaxy.id]);
   const radius = useMemo(() => galaxyRadius(nodeCount), [nodeCount]);
 
@@ -163,10 +163,21 @@ export default function Galaxy({ galaxy, center, nodeCount, dimmed, onClick }) {
       <GalaxyDust color={galaxy.color} radius={radius} seed={seed} />
       <GalaxyCore color={galaxy.color} radius={radius} dimmed={dimmed} />
 
-      {/* Невидимая сфера для клика по галактике целиком */}
-      <mesh onClick={onClick} visible={false}>
-        <sphereGeometry args={[radius * 0.5, 8, 8]} />
-      </mesh>
+      {/* Невидимая сфера для клика по галактике целиком. Радиус подобран под
+          видимое свечение (ядро рисуется спрайтом radius * 1.5): при меньшей
+          сфере попасть по галактике с общего вида почти невозможно — она
+          занимает считанные пиксели, и промах читается как "не нажимается".
+          Особенно это било по галактикам внутри контейнера: у них снаружи нет
+          подписи, и клик по телу — единственный способ войти.
+
+          Сфера охватывает и сами звёзды, поэтому у галактики, внутри которой мы
+          сейчас находимся, её не рисуем вовсе — иначе она перехватывала бы
+          клики по звёздам, оказываясь ближе к камере. */}
+      {pickable && (
+        <mesh onClick={onClick} visible={false}>
+          <sphereGeometry args={[radius * 1.2, 12, 12]} />
+        </mesh>
+      )}
     </group>
   );
 }
